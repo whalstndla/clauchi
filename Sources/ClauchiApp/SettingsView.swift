@@ -7,6 +7,8 @@ struct SettingsView: View {
     private let weekdayLabels: [(Int, String)] =
         [(1, "일"), (2, "월"), (3, "화"), (4, "수"), (5, "목"), (6, "금"), (7, "토")]
 
+    @State private var isHookInstalled = HookInstaller.isInstalled
+
     var body: some View {
         // 엔진 상태는 관찰 불가 — 반드시 모델의 스냅샷을 읽어야 토글이 갱신된다
         let settings = model.settings
@@ -43,8 +45,16 @@ struct SettingsView: View {
 
             Divider().overlay(Color(white: 0.3))
 
-            SettingChip(label: "Claude Code 훅 제거", isOn: false) {
-                try? HookInstaller.uninstall()
+            if isHookInstalled {
+                SettingChip(label: "Claude Code 훅 제거", isOn: false) {
+                    try? HookInstaller.uninstall()
+                    isHookInstalled = HookInstaller.isInstalled
+                }
+            } else {
+                SettingChip(label: "Claude Code 훅 설치", isOn: false) {
+                    try? HookInstaller.install()
+                    isHookInstalled = HookInstaller.isInstalled
+                }
             }
 
             // Dock 아이콘이 없는 앱이라 종료 수단이 여기뿐이다
