@@ -1,0 +1,270 @@
+import Foundation
+
+public enum VisualState: String, Equatable, Sendable {
+    case egg, idle, working, sleeping, hungry, critical, playing, vacation
+}
+
+public enum DialogueSituation: String, Equatable, Sendable {
+    case greeting, returnGreeting, levelUp, hatched, evolvedToAdult, graduated, died
+    case hungryWarning, criticalWarning, permissionWaiting, longWorkBreak
+    case randomChatter, vacationReturn
+}
+
+public enum EngineOutput: Equatable, Sendable {
+    case speak(DialogueSituation)
+    case hatched(Species)
+    case leveledUp(Int)
+    case petGraduated(CollectionRecord)
+    case petDied(CollectionRecord)
+}
+
+public enum DebugCommand: Sendable {
+    case setSatiety(Double)
+    case grantExp(Int)
+}
+
+// 순수 상태 머신 — 시계(이벤트 ts/tick now), 달력, 랜덤을 전부 주입받는다.
+// UI/파일시스템을 모른다. (CLAUDE.md 코드 규칙)
+public final class PetEngine {
+    public private(set) var state: GameState
+    public let config: GameConfig
+    private let hatchPool: [Species]
+    private let calendar: Calendar
+    private let random: () -> Double
+
+    private var lastTickAt: Date?
+    private var recentSatietyGains: [(at: Date, amount: Double)] = []
+    private var workingUntil: Date?
+    private var hungryWarned: Bool
+    private var lastNotificationSpokeAt: Date?
+
+    public init(config: GameConfig = .default, state: GameState,
+                hatchPool: [Species], calendar: Calendar = .current,
+                random: @escaping () -> Double = { Double.random(in: 0..<1) }) {
+        self.config = config
+        self.state = state
+        self.hatchPool = hatchPool
+        self.calendar = calendar
+        self.random = random
+        self.hungryWarned = state.pet.satiety <= config.hungryThreshold
+    }
+
+    // 첫 실행: 새 게임(첫 알)
+    public static func newGameState(now: Date, hatchPool: [Species],
+                                    random: () -> Double = { Double.random(in: 0..<1) }) -> GameState {
+        GameState(version: 1,
+                  pet: newEgg(collection: [], pool: hatchPool, now: now, random: random),
+                  collection: [], settings: .default, eventLogOffset: 0,
+                  lastChatterAt: nil, lastActivityAt: nil, continuousWorkStartedAt: nil)
+    }
+
+    // 새 알 — 아직 졸업 못한 종 중 랜덤. 죽은 종은 재도전 가능 (스펙 §5)
+    static func newEgg(collection: [CollectionRecord], pool: [Species],
+                       now: Date, random: () -> Double) -> PetState {
+        let graduatedSpecies = Set(collection.filter { $0.result == .graduated }.map(\.species))
+        var candidates = pool.filter { !graduatedSpecies.contains($0) }
+        if candidates.isEmpty { candidates = pool }
+        let index = min(Int(random() * Double(candidates.count)), candidates.count - 1)
+        return PetState(species: candidates[index], stage: .egg, level: 0, exp: 0,
+                        satiety: 100, bornAt: now, criticalAccumulatedSeconds: 0)
+    }
+
+    public func handle(_ event: ClaudeEvent) -> [EngineOutput] {
+        var outputs: [EngineOutput] = []
+        let now = event.ts
+        switch event.event {
+        case .sessionStart:
+            if let last = state.lastActivityAt {
+                let gap = now.timeIntervalSince(last)
+                if gap >= config.returnGreetingAfterSeconds {
+                    outputs.append(.speak(.returnGreeting))
+                } else if gap >= config.greetingGapSeconds {
+                    outputs.append(.speak(.greeting))
+                }
+            } else {
+                outputs.append(.speak(.greeting))
+            }
+        case .toolUse:
+            workingUntil = now.addingTimeInterval(config.workingWindowSeconds)
+            if state.continuousWorkStartedAt == nil { state.continuousWorkStartedAt = now }
+        case .stop:
+            outputs.append(contentsOf: applyFeeding(now: now))
+        case .notification:
+            let cooldownOver = lastNotificationSpokeAt
+                .map { now.timeIntervalSince($0) >= config.notificationSpeakCooldownSeconds } ?? true
+            if cooldownOver {
+                outputs.append(.speak(.permissionWaiting))
+                lastNotificationSpokeAt = now
+            }
+        }
+        state.lastActivityAt = now
+        return outputs
+    }
+
+    // Stop = 밥 — 분당 상한 적용 (스펙 §5)
+    private func applyFeeding(now: Date) -> [EngineOutput] {
+        recentSatietyGains.removeAll { now.timeIntervalSince($0.at) >= 60 }
+        let gainedLastMinute = recentSatietyGains.reduce(0) { $0 + $1.amount }
+        let allowed = max(0, config.satietyGainCapPerMinute - gainedLastMinute)
+        let gain = min(config.satietyPerStop, allowed)
+        if gain > 0 {
+            state.pet.satiety = min(100, state.pet.satiety + gain)
+            recentSatietyGains.append((at: now, amount: gain))
+            state.pet.criticalAccumulatedSeconds = 0
+            if state.pet.satiety > config.hungryThreshold { hungryWarned = false }
+        }
+        return applyExpGain(config.expPerStop, now: now)
+    }
+
+    // EXP 획득 → 부화/레벨업/진화/졸업 (스펙 §5 생애 주기)
+    private func applyExpGain(_ amount: Int, now: Date) -> [EngineOutput] {
+        var outputs: [EngineOutput] = []
+        state.pet.exp += amount
+        switch state.pet.stage {
+        case .egg:
+            if state.pet.exp >= config.hatchExp {
+                state.pet.stage = .baby
+                state.pet.level = 1
+                state.pet.exp = 0
+                outputs.append(.hatched(state.pet.species))
+                outputs.append(.speak(.hatched))
+            }
+        case .baby, .adult:
+            while state.pet.exp >= config.expToNextLevel(from: state.pet.level) {
+                state.pet.exp -= config.expToNextLevel(from: state.pet.level)
+                state.pet.level += 1
+                outputs.append(.leveledUp(state.pet.level))
+                outputs.append(.speak(.levelUp))
+                if state.pet.stage == .baby && state.pet.level >= config.adultLevel {
+                    state.pet.stage = .adult
+                    outputs.append(.speak(.evolvedToAdult))
+                }
+                if state.pet.stage == .adult && state.pet.level >= config.graduateLevel {
+                    outputs.append(contentsOf: graduate(now: now))
+                    break
+                }
+            }
+        }
+        return outputs
+    }
+
+    private func graduate(now: Date) -> [EngineOutput] {
+        let record = CollectionRecord(species: state.pet.species, result: .graduated,
+                                      daysLived: daysLived(now: now),
+                                      finalLevel: state.pet.level, endedAt: now)
+        state.collection.append(record)
+        state.pet = Self.newEgg(collection: state.collection, pool: hatchPool,
+                                now: now, random: random)
+        hungryWarned = false
+        return [.petGraduated(record), .speak(.graduated)]
+    }
+
+    private func daysLived(now: Date) -> Int {
+        max(0, calendar.dateComponents([.day], from: state.pet.bornAt, to: now).day ?? 0)
+    }
+
+    private func die(now: Date) -> [EngineOutput] {
+        let record = CollectionRecord(species: state.pet.species, result: .died,
+                                      daysLived: daysLived(now: now),
+                                      finalLevel: state.pet.level, endedAt: now)
+        state.collection.append(record)
+        state.pet = Self.newEgg(collection: state.collection, pool: hatchPool,
+                                now: now, random: random)
+        hungryWarned = false
+        return [.petDied(record), .speak(.died)]
+    }
+
+    // 1초 주기로 호출되는 시간 틱.
+    // 델타를 캡 — 잠자기/앱 정지 공백은 흐르지 않은 시간으로 취급 (스펙 §5)
+    public func tick(now: Date) -> [EngineOutput] {
+        guard let last = lastTickAt else { lastTickAt = now; return [] }
+        guard now > last else { return [] }
+        let delta = min(now.timeIntervalSince(last), config.tickDeltaCapSeconds)
+        lastTickAt = now
+        var outputs: [EngineOutput] = []
+
+        // 연속 작업 추적 — 1시간 넘으면 휴식 권유 (스펙 §5)
+        if let until = workingUntil {
+            if now.timeIntervalSince(until) > 300 {
+                workingUntil = nil
+                state.continuousWorkStartedAt = nil
+            } else if let workStart = state.continuousWorkStartedAt,
+                      now.timeIntervalSince(workStart) >= config.longWorkSeconds {
+                outputs.append(.speak(.longWorkBreak))
+                state.continuousWorkStartedAt = now
+            }
+        }
+
+        // 포만감 감쇠 — 알 단계/휴식 시간엔 정지
+        if state.pet.stage != .egg && !isRestTime(now: now) {
+            let satietyBefore = state.pet.satiety
+            state.pet.satiety = max(0, satietyBefore - config.satietyDecayPerHour * delta / 3600)
+            if !hungryWarned && state.pet.satiety <= config.hungryThreshold && state.pet.satiety > 0 {
+                hungryWarned = true
+                outputs.append(.speak(.hungryWarning))
+            }
+            if state.pet.satiety == 0 {
+                if satietyBefore > 0 { outputs.append(.speak(.criticalWarning)) }
+                state.pet.criticalAccumulatedSeconds += delta
+                if state.pet.criticalAccumulatedSeconds >= config.criticalSecondsToDeath {
+                    outputs.append(contentsOf: die(now: now))
+                    return outputs
+                }
+            }
+        }
+
+        // 랜덤 잡담 — 쿨다운 후 평균 10분 내 발화 (휴가/알 제외)
+        if !state.settings.vacationMode && state.pet.stage != .egg {
+            let cooldownOver = state.lastChatterAt
+                .map { now.timeIntervalSince($0) >= config.chatterCooldownSeconds } ?? true
+            if cooldownOver && random() < delta / 600 {
+                state.lastChatterAt = now
+                outputs.append(.speak(.randomChatter))
+            }
+        }
+        return outputs
+    }
+
+    // 주말 휴식 또는 휴가 모드 (스펙 §5 휴식 예외)
+    private func isRestTime(now: Date) -> Bool {
+        state.settings.vacationMode
+            || state.settings.restWeekdays.contains(calendar.component(.weekday, from: now))
+    }
+
+    // UI 표시 상태 — 우선순위: 휴가 > 알 > 위독 > 배고픔 > 휴일놀기 > 작업 > 잠 > 대기 (스펙 §7)
+    public func visualState(now: Date) -> VisualState {
+        if state.settings.vacationMode { return .vacation }
+        if state.pet.stage == .egg { return .egg }
+        if state.pet.satiety == 0 { return .critical }
+        if state.pet.satiety <= config.hungryThreshold { return .hungry }
+        if isRestTime(now: now) { return .playing }
+        if let until = workingUntil, until > now { return .working }
+        if let last = state.lastActivityAt,
+           now.timeIntervalSince(last) >= config.sleepAfterIdleSeconds { return .sleeping }
+        return .idle
+    }
+
+    public func setVacation(_ on: Bool) -> [EngineOutput] {
+        let wasOn = state.settings.vacationMode
+        state.settings.vacationMode = on
+        if wasOn && !on { return [.speak(.vacationReturn)] }
+        return []
+    }
+
+    public func updateSettings(_ settings: GameSettings) { state.settings = settings }
+
+    // 앱이 이벤트 로그 처리 위치를 상태에 반영할 때 사용
+    public func setEventLogOffset(_ offset: UInt64) { state.eventLogOffset = offset }
+
+    // 디버그 메뉴 전용 (스펙 §11)
+    public func debugApply(_ command: DebugCommand, now: Date) -> [EngineOutput] {
+        switch command {
+        case .setSatiety(let value):
+            state.pet.satiety = max(0, min(100, value))
+            if state.pet.satiety > 0 { state.pet.criticalAccumulatedSeconds = 0 }
+            return []
+        case .grantExp(let amount):
+            return applyExpGain(amount, now: now)
+        }
+    }
+}

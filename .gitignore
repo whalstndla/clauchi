@@ -9,3 +9,6 @@ xcuserdata/
 
 # Superpowers brainstorming session files
 .superpowers/
+
+# 앱 번들 산출물
+build/

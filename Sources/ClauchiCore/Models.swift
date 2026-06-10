@@ -1,0 +1,104 @@
+import Foundation
+
+public enum Species: String, Codable, CaseIterable, Equatable, Sendable {
+    case rat, ox, tiger, rabbit, dragon, snake
+    case horse, goat, monkey, rooster, dog, pig
+
+    public var koreanName: String {
+        switch self {
+        case .rat: "쥐돌이"
+        case .ox: "우공이"
+        case .tiger: "호랑이"
+        case .rabbit: "토토"
+        case .dragon: "용용이"
+        case .snake: "스르륵"
+        case .horse: "말랑이"
+        case .goat: "양순이"
+        case .monkey: "몽키"
+        case .rooster: "꼬꼬"
+        case .dog: "멍멍이"
+        case .pig: "꿀꿀이"
+        }
+    }
+}
+
+public enum Stage: String, Codable, Equatable, Sendable { case egg, baby, adult }
+
+public enum LifeResult: String, Codable, Equatable, Sendable { case graduated, died }
+
+public struct CollectionRecord: Codable, Equatable, Sendable {
+    public var species: Species
+    public var result: LifeResult
+    public var daysLived: Int
+    public var finalLevel: Int
+    public var endedAt: Date
+    public init(species: Species, result: LifeResult, daysLived: Int, finalLevel: Int, endedAt: Date) {
+        self.species = species; self.result = result
+        self.daysLived = daysLived; self.finalLevel = finalLevel; self.endedAt = endedAt
+    }
+}
+
+public struct PetState: Codable, Equatable, Sendable {
+    public var species: Species
+    public var stage: Stage
+    public var level: Int
+    public var exp: Int                 // 현재 레벨에서 쌓은 EXP (레벨업 시 차감)
+    public var satiety: Double          // 0...100
+    public var bornAt: Date
+    public var criticalAccumulatedSeconds: TimeInterval
+    public init(species: Species, stage: Stage, level: Int, exp: Int,
+                satiety: Double, bornAt: Date, criticalAccumulatedSeconds: TimeInterval) {
+        self.species = species; self.stage = stage; self.level = level; self.exp = exp
+        self.satiety = satiety; self.bornAt = bornAt
+        self.criticalAccumulatedSeconds = criticalAccumulatedSeconds
+    }
+}
+
+public struct GameSettings: Codable, Equatable, Sendable {
+    public var restWeekdays: Set<Int>   // Calendar.weekday (1=일 ... 7=토)
+    public var vacationMode: Bool
+    public var dialogueAIEnabled: Bool
+    public var launchAtLogin: Bool
+    public init(restWeekdays: Set<Int>, vacationMode: Bool, dialogueAIEnabled: Bool, launchAtLogin: Bool) {
+        self.restWeekdays = restWeekdays; self.vacationMode = vacationMode
+        self.dialogueAIEnabled = dialogueAIEnabled; self.launchAtLogin = launchAtLogin
+    }
+    public static let `default` = GameSettings(
+        restWeekdays: [1, 7], vacationMode: false, dialogueAIEnabled: true, launchAtLogin: false)
+}
+
+public struct GameState: Codable, Equatable, Sendable {
+    public var version: Int
+    public var pet: PetState
+    public var collection: [CollectionRecord]
+    public var settings: GameSettings
+    public var eventLogOffset: UInt64
+    public var lastChatterAt: Date?
+    public var lastActivityAt: Date?
+    public var continuousWorkStartedAt: Date?
+    public init(version: Int, pet: PetState, collection: [CollectionRecord],
+                settings: GameSettings, eventLogOffset: UInt64,
+                lastChatterAt: Date?, lastActivityAt: Date?, continuousWorkStartedAt: Date?) {
+        self.version = version; self.pet = pet; self.collection = collection
+        self.settings = settings; self.eventLogOffset = eventLogOffset
+        self.lastChatterAt = lastChatterAt; self.lastActivityAt = lastActivityAt
+        self.continuousWorkStartedAt = continuousWorkStartedAt
+    }
+}
+
+// 프로젝트 공용 JSON 코더 — 날짜는 ISO8601 고정
+extension JSONEncoder {
+    public static var clauchi: JSONEncoder {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        encoder.outputFormatting = [.sortedKeys]
+        return encoder
+    }
+}
+extension JSONDecoder {
+    public static var clauchi: JSONDecoder {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return decoder
+    }
+}
