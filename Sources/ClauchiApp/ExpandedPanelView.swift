@@ -61,12 +61,10 @@ struct ExpandedPanelView: View {
                                   : model.engine.config.expToNextLevel(from: pet.level)),
                     tint: .yellow)
 
-            Toggle("휴가 모드", isOn: Binding(
-                get: { model.settings.vacationMode },
-                set: { model.toggleVacation($0) }))
-                .toggleStyle(.switch)
-                .tint(.green)
-                .foregroundStyle(.white)
+            SettingSwitchRow(label: "휴가 모드", isOn: model.settings.vacationMode) { on in
+                model.toggleVacation(on)
+            }
+            .frame(maxWidth: 200)
 
             #if DEBUG
             debugSection
