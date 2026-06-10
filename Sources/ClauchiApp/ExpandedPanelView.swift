@@ -8,6 +8,7 @@ struct ExpandedPanelView: View {
     @State private var rerollArmed = false   // 리세마라 2단계 확인
     @State private var isEditingName = false
     @State private var nameInput = ""
+    @FocusState private var isNameFieldFocused: Bool
 
     private let tabs = ["🐾 펫", "📒 도감", "⚙️ 설정"]
 
@@ -96,11 +97,16 @@ struct ExpandedPanelView: View {
                         .textFieldStyle(.roundedBorder)
                         .font(.system(size: 12, weight: .bold, design: .rounded))
                         .frame(width: 150)
+                        .focused($isNameFieldFocused)
                         .onSubmit {
                             model.renamePet(nameInput)
                             isEditingName = false
+                            isNameFieldFocused = false
                         }
-                    Button("취소") { isEditingName = false }
+                    Button("취소") {
+                        isEditingName = false
+                        isNameFieldFocused = false
+                    }
                         .buttonStyle(.plain)
                         .font(.system(size: 10, design: .rounded))
                         .foregroundStyle(.white.opacity(0.6))
@@ -113,10 +119,18 @@ struct ExpandedPanelView: View {
                     Button("✏️") {
                         nameInput = pet.customName ?? ""
                         isEditingName = true
+                        isNameFieldFocused = true
                     }
                     .buttonStyle(.plain)
                     .font(.system(size: 11))
                 }
+            }
+            // 패널 열린 채 리세마라/부화로 펫이 바뀌면 이전 펫 기준 편집 상태를 정리한다
+            // (bornAt이 펫 개체 식별자 역할 — 새 알마다 갱신됨)
+            .onChange(of: pet.bornAt) {
+                isEditingName = false
+                nameInput = ""
+                isNameFieldFocused = false
             }
 
             VStack(spacing: 7) {
