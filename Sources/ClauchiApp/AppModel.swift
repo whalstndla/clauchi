@@ -19,6 +19,9 @@ final class AppModel {
 
     private(set) var visualState: VisualState = .idle
     private(set) var frameIndex = 0
+    // PetEngine은 @Observable이 아니라서 설정 변경이 SwiftUI에 전파되지 않는다 —
+    // 뷰가 읽을 관찰용 스냅샷을 둔다
+    private(set) var settings: GameSettings = .default
     var isHovering = false {
         didSet { NotificationCenter.default.post(name: .clauchiHoverChanged, object: nil) }
     }
@@ -63,6 +66,7 @@ final class AppModel {
                 text: "이전 기록을 읽지 못해서 새로 시작했어... 미안!",
                 expression: .sad, species: pet.species, stage: pet.stage))
         }
+        settings = engine.state.settings
         refreshDialogueProvider()
         startTimer()
     }
@@ -90,6 +94,7 @@ final class AppModel {
         engine.setEventLogOffset(reader.offset)
         outputs += engine.tick(now: now)
         visualState = engine.visualState(now: now)
+        if settings != engine.state.settings { settings = engine.state.settings }
         frameIndex += 1
         process(outputs)
         autosaveCounter += 1
@@ -156,16 +161,23 @@ final class AppModel {
         try? store.save(engine.state)
     }
 
-    // 설정/디버그 진입점 (Task 20에서 UI 연결)
-    func applySettings(_ settings: GameSettings) {
-        engine.updateSettings(settings)
+    // 설정/디버그 진입점
+    func applySettings(_ newSettings: GameSettings) {
+        engine.updateSettings(newSettings)
+        settings = engine.state.settings
         saveNow()
     }
     func toggleVacation(_ on: Bool) {
         process(engine.setVacation(on))
+        settings = engine.state.settings
         saveNow()
     }
-    func debugFastForward(_ seconds: TimeInterval) { clock.fastForward(seconds) }
+    func debugFastForward(_ seconds: TimeInterval) {
+        clock.fastForward(seconds)
+        // 시계 이동만으론 델타 캡에 걸려 무시되므로 엔진 시뮬레이션을 함께 돌린다
+        process(engine.debugAdvance(seconds: seconds, from: clock.now()))
+        saveNow()
+    }
     func debugInject(_ kind: ClaudeEventKind) {
         process(engine.handle(ClaudeEvent(ts: clock.now(), event: kind,
                                           sessionId: "debug", cwd: nil)))

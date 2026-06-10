@@ -60,6 +60,24 @@ let saturday9am = Date(timeIntervalSince1970: 1_780_736_400)
     #expect(eggEngine.visualState(now: t) == .egg)
 }
 
+@Test func debugAdvanceSimulatesElapsedTime() {
+    // 시계만 옮기면 델타 캡(5초)에 잘려서 아무 일도 안 일어난다 —
+    // debugAdvance는 캡 단위로 틱을 반복해 실제 경과처럼 동작해야 한다
+    let engine = TestSupport.makeEngine(state: TestSupport.makeState(satiety: 0))
+    var outputs: [EngineOutput] = []
+    for _ in 0..<7 {   // 1시간 × 7 (사망 기준 6시간)
+        outputs += engine.debugAdvance(seconds: 3600, from: TestSupport.weekday9am)
+    }
+    #expect(outputs.contains { if case .petDied = $0 { true } else { false } })
+    #expect(engine.state.pet.stage == .egg)   // 사망 후 새 알
+}
+
+@Test func debugAdvanceDecaysSatiety() {
+    let engine = TestSupport.makeEngine(state: TestSupport.makeState(satiety: 100))
+    _ = engine.debugAdvance(seconds: 3600, from: TestSupport.weekday9am)
+    #expect(abs(engine.state.pet.satiety - 90) < 0.1)
+}
+
 @Test func debugCommandsWork() {
     let engine = TestSupport.makeEngine()
     _ = engine.debugApply(.setSatiety(0), now: TestSupport.weekday9am)

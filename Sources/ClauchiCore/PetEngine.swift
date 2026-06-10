@@ -256,6 +256,22 @@ public final class PetEngine {
     // 앱이 이벤트 로그 처리 위치를 상태에 반영할 때 사용
     public func setEventLogOffset(_ offset: UInt64) { state.eventLogOffset = offset }
 
+    // 디버그 빨리감기 — 시계만 옮기면 델타 캡이 점프를 "잠자기"로 취급해 무시하므로,
+    // 캡 단위로 tick을 반복해 실제 시간 경과를 시뮬레이션한다 (스펙 §11)
+    public func debugAdvance(seconds: TimeInterval, from now: Date) -> [EngineOutput] {
+        if lastTickAt == nil { _ = tick(now: now) }
+        guard let baseline = lastTickAt else { return [] }
+        var outputs: [EngineOutput] = []
+        let step = config.tickDeltaCapSeconds
+        var current = baseline
+        let end = baseline.addingTimeInterval(seconds)
+        while current < end {
+            current = min(current.addingTimeInterval(step), end)
+            outputs.append(contentsOf: tick(now: current))
+        }
+        return outputs
+    }
+
     // 디버그 메뉴 전용 (스펙 §11)
     public func debugApply(_ command: DebugCommand, now: Date) -> [EngineOutput] {
         switch command {

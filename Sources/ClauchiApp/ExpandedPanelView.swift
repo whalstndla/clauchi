@@ -62,9 +62,10 @@ struct ExpandedPanelView: View {
                     tint: .yellow)
 
             Toggle("휴가 모드", isOn: Binding(
-                get: { model.engine.state.settings.vacationMode },
+                get: { model.settings.vacationMode },
                 set: { model.toggleVacation($0) }))
                 .toggleStyle(.switch)
+                .tint(.green)
                 .foregroundStyle(.white)
 
             #if DEBUG
