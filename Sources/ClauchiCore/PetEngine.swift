@@ -76,7 +76,8 @@ public final class PetEngine {
         case .sessionStart:
             break   // Task 9에서 인사 구현
         case .toolUse:
-            break   // Task 8에서 작업 상태 구현
+            workingUntil = now.addingTimeInterval(config.workingWindowSeconds)
+            if state.continuousWorkStartedAt == nil { state.continuousWorkStartedAt = now }
         case .stop:
             outputs.append(contentsOf: applyFeeding(now: now))
         case .notification:
@@ -192,5 +193,39 @@ public final class PetEngine {
     private func isRestTime(now: Date) -> Bool {
         state.settings.vacationMode
             || state.settings.restWeekdays.contains(calendar.component(.weekday, from: now))
+    }
+
+    // UI 표시 상태 — 우선순위: 휴가 > 알 > 위독 > 배고픔 > 휴일놀기 > 작업 > 잠 > 대기 (스펙 §7)
+    public func visualState(now: Date) -> VisualState {
+        if state.settings.vacationMode { return .vacation }
+        if state.pet.stage == .egg { return .egg }
+        if state.pet.satiety == 0 { return .critical }
+        if state.pet.satiety <= config.hungryThreshold { return .hungry }
+        if isRestTime(now: now) { return .playing }
+        if let until = workingUntil, until > now { return .working }
+        if let last = state.lastActivityAt,
+           now.timeIntervalSince(last) >= config.sleepAfterIdleSeconds { return .sleeping }
+        return .idle
+    }
+
+    public func setVacation(_ on: Bool) -> [EngineOutput] {
+        let wasOn = state.settings.vacationMode
+        state.settings.vacationMode = on
+        if wasOn && !on { return [.speak(.vacationReturn)] }
+        return []
+    }
+
+    public func updateSettings(_ settings: GameSettings) { state.settings = settings }
+
+    // 디버그 메뉴 전용 (스펙 §11)
+    public func debugApply(_ command: DebugCommand, now: Date) -> [EngineOutput] {
+        switch command {
+        case .setSatiety(let value):
+            state.pet.satiety = max(0, min(100, value))
+            if state.pet.satiety > 0 { state.pet.criticalAccumulatedSeconds = 0 }
+            return []
+        case .grantExp(let amount):
+            return applyExpGain(amount, now: now)
+        }
     }
 }
