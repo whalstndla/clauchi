@@ -58,11 +58,14 @@ public final class PetEngine {
                   lastChatterAt: nil, lastActivityAt: nil, continuousWorkStartedAt: nil)
     }
 
-    // 새 알 생성 (부화 풀 필터링은 Task 6에서 확장)
+    // 새 알 — 아직 졸업 못한 종 중 랜덤. 죽은 종은 재도전 가능 (스펙 §5)
     static func newEgg(collection: [CollectionRecord], pool: [Species],
                        now: Date, random: () -> Double) -> PetState {
-        let index = min(Int(random() * Double(pool.count)), pool.count - 1)
-        return PetState(species: pool[index], stage: .egg, level: 0, exp: 0,
+        let graduatedSpecies = Set(collection.filter { $0.result == .graduated }.map(\.species))
+        var candidates = pool.filter { !graduatedSpecies.contains($0) }
+        if candidates.isEmpty { candidates = pool }
+        let index = min(Int(random() * Double(candidates.count)), candidates.count - 1)
+        return PetState(species: candidates[index], stage: .egg, level: 0, exp: 0,
                         satiety: 100, bornAt: now, criticalAccumulatedSeconds: 0)
     }
 
@@ -98,10 +101,51 @@ public final class PetEngine {
         return applyExpGain(config.expPerStop, now: now)
     }
 
-    // EXP 획득 (레벨업/부화/진화/졸업은 Task 6에서 확장)
+    // EXP 획득 → 부화/레벨업/진화/졸업 (스펙 §5 생애 주기)
     private func applyExpGain(_ amount: Int, now: Date) -> [EngineOutput] {
+        var outputs: [EngineOutput] = []
         state.pet.exp += amount
-        return []
+        switch state.pet.stage {
+        case .egg:
+            if state.pet.exp >= config.hatchExp {
+                state.pet.stage = .baby
+                state.pet.level = 1
+                state.pet.exp = 0
+                outputs.append(.hatched(state.pet.species))
+                outputs.append(.speak(.hatched))
+            }
+        case .baby, .adult:
+            while state.pet.exp >= config.expToNextLevel(from: state.pet.level) {
+                state.pet.exp -= config.expToNextLevel(from: state.pet.level)
+                state.pet.level += 1
+                outputs.append(.leveledUp(state.pet.level))
+                outputs.append(.speak(.levelUp))
+                if state.pet.stage == .baby && state.pet.level >= config.adultLevel {
+                    state.pet.stage = .adult
+                    outputs.append(.speak(.evolvedToAdult))
+                }
+                if state.pet.stage == .adult && state.pet.level >= config.graduateLevel {
+                    outputs.append(contentsOf: graduate(now: now))
+                    break
+                }
+            }
+        }
+        return outputs
+    }
+
+    private func graduate(now: Date) -> [EngineOutput] {
+        let record = CollectionRecord(species: state.pet.species, result: .graduated,
+                                      daysLived: daysLived(now: now),
+                                      finalLevel: state.pet.level, endedAt: now)
+        state.collection.append(record)
+        state.pet = Self.newEgg(collection: state.collection, pool: hatchPool,
+                                now: now, random: random)
+        hungryWarned = false
+        return [.petGraduated(record), .speak(.graduated)]
+    }
+
+    private func daysLived(now: Date) -> Int {
+        max(0, calendar.dateComponents([.day], from: state.pet.bornAt, to: now).day ?? 0)
     }
 
     // 1초 주기로 호출되는 시간 틱.
