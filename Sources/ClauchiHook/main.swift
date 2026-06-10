@@ -12,12 +12,17 @@ func run() {
     let input = FileHandle.standardInput.readData(ofLength: 1_048_576)
     var sessionId = "unknown"
     var cwd: String?
+    var prompt: String?
     if let json = try? JSONSerialization.jsonObject(with: input) as? [String: Any] {
         sessionId = (json["session_id"] as? String) ?? "unknown"
         cwd = json["cwd"] as? String
+        // 프롬프트는 user-prompt 이벤트만, 앞 200자 (프라이버시·파일 크기, 스펙 §3.3)
+        if kind == .userPrompt, let rawPrompt = json["prompt"] as? String {
+            prompt = String(rawPrompt.prefix(200))
+        }
     }
 
-    let event = ClaudeEvent(ts: Date(), event: kind, sessionId: sessionId, cwd: cwd)
+    let event = ClaudeEvent(ts: Date(), event: kind, sessionId: sessionId, cwd: cwd, prompt: prompt)
     guard let line = try? event.jsonLine() else { return }
 
     let directory = FileManager.default.homeDirectoryForCurrentUser
