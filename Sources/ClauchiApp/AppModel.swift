@@ -54,7 +54,7 @@ final class AppModel {
             engine.setEventLogOffset(0)
         }
 
-        dialogueProvider = TemplateDialogueProvider()   // Task 21에서 FM 프로바이더로 교체
+        dialogueProvider = TemplateDialogueProvider()
 
         // 손상 복구 실패 → 새 게임 사과 토스트 (스펙 §10)
         if startedFreshAfterCorruption {
@@ -63,7 +63,18 @@ final class AppModel {
                 text: "이전 기록을 읽지 못해서 새로 시작했어... 미안!",
                 expression: .sad, species: pet.species, stage: pet.stage))
         }
+        refreshDialogueProvider()
         startTimer()
+    }
+
+    // 설정에 따라 AI/템플릿 프로바이더 선택 (스펙 §6)
+    func refreshDialogueProvider() {
+        if engine.state.settings.dialogueAIEnabled {
+            dialogueProvider = FoundationModelsDialogueProvider(fallback: TemplateDialogueProvider())
+            FoundationModelsDialogueProvider.warmUp()
+        } else {
+            dialogueProvider = TemplateDialogueProvider()
+        }
     }
 
     private func startTimer() {
