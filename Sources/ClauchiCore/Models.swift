@@ -41,29 +41,38 @@ public struct CollectionRecord: Codable, Equatable, Sendable {
 public struct PetState: Codable, Equatable, Sendable {
     public var species: Species
     public var stage: Stage
+    public var customName: String?      // 사용자가 지은 이름 — nil이면 종 기본 이름
     public var level: Int
     public var exp: Int                 // 현재 레벨에서 쌓은 EXP (레벨업 시 차감)
     public var satiety: Double          // 0...100
     public var mood: Double             // 0...100 — 쓰다듬기/레벨업으로 상승 (스펙 §5)
     public var bornAt: Date
     public var criticalAccumulatedSeconds: TimeInterval
+
+    public var displayName: String {
+        customName ?? species.koreanName
+    }
+
     public init(species: Species, stage: Stage, level: Int, exp: Int,
                 satiety: Double, mood: Double, bornAt: Date,
-                criticalAccumulatedSeconds: TimeInterval) {
-        self.species = species; self.stage = stage; self.level = level; self.exp = exp
+                criticalAccumulatedSeconds: TimeInterval, customName: String? = nil) {
+        self.species = species; self.stage = stage; self.customName = customName
+        self.level = level; self.exp = exp
         self.satiety = satiety; self.mood = mood; self.bornAt = bornAt
         self.criticalAccumulatedSeconds = criticalAccumulatedSeconds
     }
 
     enum CodingKeys: String, CodingKey {
-        case species, stage, level, exp, satiety, mood, bornAt, criticalAccumulatedSeconds
+        case species, stage, customName, level, exp, satiety, mood, bornAt, criticalAccumulatedSeconds
     }
 
     // mood 가 없는 v1 세이브 마이그레이션 — 기본 80 (스펙 §9 버전 대비)
+    // customName 이 없는 구버전 세이브 마이그레이션 — nil 디코드
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         species = try container.decode(Species.self, forKey: .species)
         stage = try container.decode(Stage.self, forKey: .stage)
+        customName = try container.decodeIfPresent(String.self, forKey: .customName)
         level = try container.decode(Int.self, forKey: .level)
         exp = try container.decode(Int.self, forKey: .exp)
         satiety = try container.decode(Double.self, forKey: .satiety)
