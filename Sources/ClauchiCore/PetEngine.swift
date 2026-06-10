@@ -76,6 +76,12 @@ public final class PetEngine {
                         satiety: 100, mood: 80, bornAt: now, criticalAccumulatedSeconds: 0)
     }
 
+    // 이름 변경 — 트림 후 빈 문자열이면 기본 이름 복귀, 12자 초과는 앞 12자 (스펙 §2.2)
+    public func renamePet(_ rawName: String) {
+        let trimmed = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
+        state.pet.customName = trimmed.isEmpty ? nil : String(trimmed.prefix(12))
+    }
+
     // 리세마라 — 성체가 되기 전(알/아기)에만 새 알로 다시 뽑기. 기록을 남기지 않는다 (스펙 §5)
     public func reroll(now: Date) -> [EngineOutput] {
         guard state.pet.stage != .adult else { return [] }
@@ -192,7 +198,8 @@ public final class PetEngine {
     private func graduate(now: Date) -> [EngineOutput] {
         let record = CollectionRecord(species: state.pet.species, result: .graduated,
                                       daysLived: daysLived(now: now),
-                                      finalLevel: state.pet.level, endedAt: now)
+                                      finalLevel: state.pet.level, endedAt: now,
+                                      customName: state.pet.customName)
         state.collection.append(record)
         state.pet = Self.newEgg(collection: state.collection, pool: hatchPool,
                                 now: now, random: random)
@@ -207,7 +214,8 @@ public final class PetEngine {
     private func die(now: Date) -> [EngineOutput] {
         let record = CollectionRecord(species: state.pet.species, result: .died,
                                       daysLived: daysLived(now: now),
-                                      finalLevel: state.pet.level, endedAt: now)
+                                      finalLevel: state.pet.level, endedAt: now,
+                                      customName: state.pet.customName)
         state.collection.append(record)
         state.pet = Self.newEgg(collection: state.collection, pool: hatchPool,
                                 now: now, random: random)

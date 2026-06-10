@@ -32,9 +32,12 @@ public struct CollectionRecord: Codable, Equatable, Sendable {
     public var daysLived: Int
     public var finalLevel: Int
     public var endedAt: Date
-    public init(species: Species, result: LifeResult, daysLived: Int, finalLevel: Int, endedAt: Date) {
+    public var customName: String?          // 생애 종료 시 보존되는 사용자 지정 이름
+    public init(species: Species, result: LifeResult, daysLived: Int, finalLevel: Int,
+                endedAt: Date, customName: String? = nil) {
         self.species = species; self.result = result
         self.daysLived = daysLived; self.finalLevel = finalLevel; self.endedAt = endedAt
+        self.customName = customName
     }
 }
 
