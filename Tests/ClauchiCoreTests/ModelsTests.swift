@@ -39,7 +39,7 @@ import Testing
 
 @Test func customNameMissingDecodesAsNil() throws {
     // customName이 없는 구버전 세이브 — nil 디코드 + 종 기본 이름 표시
-    let json = #"{"species":"tiger","stage":"adult","level":15,"exp":0,"satiety":80,"mood":50,"bornAt":"2026-06-01T00:00:00Z","criticalAccumulatedSeconds":0}"#
+    let json = #"{"species":"tiger","stage":"adult","level":15,"exp":0,"satiety":80,"bornAt":"2026-06-01T00:00:00Z","criticalAccumulatedSeconds":0}"#
     let pet = try JSONDecoder.clauchi.decode(PetState.self, from: Data(json.utf8))
     #expect(pet.customName == nil)
     #expect(pet.displayName == "호랑이")
