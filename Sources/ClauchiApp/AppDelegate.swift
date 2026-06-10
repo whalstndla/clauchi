@@ -15,6 +15,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             forName: .clauchiHoverChanged, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in self?.updatePillFrame() }
         }
+        NotificationCenter.default.addObserver(
+            forName: .clauchiPanelToggled, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in self?.toggleExpandedPanel() }
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -31,6 +35,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func updatePillFrame() {
         let metrics = Self.pillMetrics(hovering: model.isHovering)
         pillPanel.setFrame(metrics.frame, display: true, animate: true)
+    }
+
+    private func toggleExpandedPanel() {
+        if model.isPanelOpen {
+            let screen = Self.targetScreen()
+            let barHeight = screen.safeAreaInsets.top > 0 ? screen.safeAreaInsets.top : 32
+            let width: CGFloat = 340, height: CGFloat = 420
+            let frame = NSRect(x: screen.frame.midX - width / 2,
+                               y: screen.frame.maxY - barHeight - height,
+                               width: width, height: height)
+            let panel = NotchPanel(contentRect: frame)
+            panel.contentView = NSHostingView(rootView: ExpandedPanelView(model: model))
+            panel.orderFrontRegardless()
+            expandedPanel = panel
+        } else {
+            expandedPanel?.orderOut(nil)
+            expandedPanel = nil
+        }
     }
 
     // 내장 노치 디스플레이 우선, 없으면 메인 화면 (스펙 §7)
