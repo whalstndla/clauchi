@@ -253,6 +253,9 @@ public final class PetEngine {
 
     public func updateSettings(_ settings: GameSettings) { state.settings = settings }
 
+    // 앱이 이벤트 로그 처리 위치를 상태에 반영할 때 사용
+    public func setEventLogOffset(_ offset: UInt64) { state.eventLogOffset = offset }
+
     // 디버그 메뉴 전용 (스펙 §11)
     public func debugApply(_ command: DebugCommand, now: Date) -> [EngineOutput] {
         switch command {
