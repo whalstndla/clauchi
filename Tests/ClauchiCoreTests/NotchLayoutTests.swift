@@ -6,10 +6,10 @@ import Testing
     let metrics = NotchLayout.pillMetrics(
         screenFrame: CGRect(x: 0, y: 0, width: 1512, height: 982),
         notchWidth: 200, barHeight: 37, wingWidth: 56)
-    #expect(metrics.frame.width == 200 + 56 * 2)
-    #expect(metrics.frame.midX == 756)
-    #expect(metrics.frame.maxY == 982)
-    #expect(metrics.frame.height == 37)
+    #expect(metrics.frame.width == CGFloat(200 + 56 * 2))
+    #expect(metrics.frame.midX == CGFloat(756))
+    #expect(metrics.frame.maxY == CGFloat(982))
+    #expect(metrics.frame.height == CGFloat(37))
 }
 
 @Test func hoverExpansionWidensWings() {
@@ -19,7 +19,7 @@ import Testing
     let hovered = NotchLayout.pillMetrics(
         screenFrame: CGRect(x: 0, y: 0, width: 1512, height: 982),
         notchWidth: 200, barHeight: 37, wingWidth: 56, hoverExpansion: 44)
-    #expect(hovered.frame.width == base.frame.width + 88)
+    #expect(hovered.frame.width == base.frame.width + CGFloat(88))
     #expect(hovered.frame.midX == base.frame.midX)
 }
 
@@ -27,8 +27,8 @@ import Testing
     let metrics = NotchLayout.pillMetrics(
         screenFrame: CGRect(x: 0, y: 0, width: 2560, height: 1440),
         notchWidth: 0, barHeight: 32, wingWidth: 56)
-    #expect(metrics.notchWidth == 180)   // 가상 노치 폭
-    #expect(metrics.frame.midX == 1280)
+    #expect(metrics.notchWidth == CGFloat(180))   // 가상 노치 폭
+    #expect(metrics.frame.midX == CGFloat(1280))
 }
 
 @Test func engineEventLogOffsetIsSettable() {
