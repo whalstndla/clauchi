@@ -47,7 +47,13 @@ struct SettingsView: View {
                 .toggleStyle(.switch).font(.caption).foregroundStyle(.white)
 
             Button("Claude Code 훅 제거") {
-                try? HookInstaller.uninstall()        // Task 22에서 실구현
+                try? HookInstaller.uninstall()
+            }
+            .font(.caption)
+
+            // Dock 아이콘이 없는 앱이라 종료 수단이 여기뿐이다
+            Button("Clauchi 종료", role: .destructive) {
+                NSApp.terminate(nil)
             }
             .font(.caption)
         }
