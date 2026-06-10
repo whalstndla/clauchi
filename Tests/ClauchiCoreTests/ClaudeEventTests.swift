@@ -34,3 +34,14 @@ import Testing
     let line = #"{"ts":"2026-06-10T10:24:31Z","event":"stop","sessionId":"abc"}"#
     #expect(ClaudeEvent.fromJSONLine(Data(line.utf8))?.prompt == nil)
 }
+
+@Test func userPromptEventRoundtrips() throws {
+    let event = ClaudeEvent(ts: Date(timeIntervalSince1970: 1_780_000_000),
+                            event: .userPrompt, sessionId: "s2",
+                            cwd: nil, prompt: "로그인 버그 잡아줘")
+    let line = try event.jsonLine()
+    let decoded = ClaudeEvent.fromJSONLine(Data(line.utf8))
+    #expect(decoded?.event == .userPrompt)
+    #expect(decoded?.prompt == "로그인 버그 잡아줘")
+    #expect(!line.contains("\n"))
+}
