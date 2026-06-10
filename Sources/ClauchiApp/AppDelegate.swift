@@ -47,6 +47,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                y: screen.frame.maxY - barHeight - height,
                                width: width, height: height)
             let panel = NotchPanel(contentRect: frame)
+            // 확장 패널은 TextField(이름 변경)가 있어 키 입력을 허용한다
+            panel.allowsKeyboardInput = true
             panel.contentView = NSHostingView(rootView: ExpandedPanelView(model: model))
             panel.orderFrontRegardless()
             expandedPanel = panel

@@ -134,7 +134,7 @@ final class AppModel {
     private func speakToast(situation: DialogueSituation) {
         let pet = engine.state.pet
         let context = DialogueContext(
-            situation: situation, petName: pet.species.koreanName,
+            situation: situation, petName: pet.displayName,
             stage: pet.stage, level: pet.level, satiety: Int(pet.satiety),
             mood: Int(pet.mood))
         let expression: ClauchiCore.Expression = switch situation {
@@ -149,7 +149,7 @@ final class AppModel {
     private func recordToast(record: CollectionRecord, situation: DialogueSituation,
                              expression: ClauchiCore.Expression) {
         let context = DialogueContext(
-            situation: situation, petName: record.species.koreanName,
+            situation: situation, petName: record.customName ?? record.species.koreanName,
             stage: .adult, level: record.finalLevel,
             satiety: situation == .died ? 0 : 100)
         enqueueDialogueToast(context: context, expression: expression,
@@ -184,6 +184,12 @@ final class AppModel {
     // 리세마라 — 알/아기 단계에서 새 알 다시 뽑기 (스펙 §5)
     func reroll() {
         process(engine.reroll(now: clock.now()))
+        saveNow()
+    }
+
+    // 이름 변경 — 엔진 검증(트림·12자) 후 즉시 저장
+    func renamePet(_ name: String) {
+        engine.renamePet(name)
         saveNow()
     }
 }

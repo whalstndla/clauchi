@@ -49,7 +49,7 @@ struct PillView: View {
     }
 
     private func petTitle(_ pet: PetState) -> String {
-        pet.stage == .egg ? "??? 의 알" : "\(pet.species.koreanName) Lv.\(pet.level)"
+        pet.stage == .egg ? "??? 의 알" : "\(pet.displayName) Lv.\(pet.level)"
     }
 
     private var statusDot: some View {

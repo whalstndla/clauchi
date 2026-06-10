@@ -6,6 +6,8 @@ struct ExpandedPanelView: View {
     @Bindable var model: AppModel
     @State private var selectedTab = 0
     @State private var rerollArmed = false   // 리세마라 2단계 확인
+    @State private var isEditingName = false
+    @State private var nameInput = ""
 
     private let tabs = ["🐾 펫", "📒 도감", "⚙️ 설정"]
 
@@ -88,9 +90,34 @@ struct ExpandedPanelView: View {
             .contentShape(Rectangle())
             .onTapGesture { model.petPet() }
 
-            Text(pet.stage == .egg ? "부화를 기다리는 알" : "\(pet.species.koreanName) Lv.\(pet.level)")
-                .font(.system(size: 15, weight: .heavy, design: .rounded))
-                .foregroundStyle(CuteTheme.cream)
+            HStack(spacing: 6) {
+                if isEditingName {
+                    TextField("이름 (최대 12자)", text: $nameInput)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .frame(width: 150)
+                        .onSubmit {
+                            model.renamePet(nameInput)
+                            isEditingName = false
+                        }
+                    Button("취소") { isEditingName = false }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 10, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.6))
+                } else {
+                    Text(pet.stage == .egg
+                         ? "부화를 기다리는 알"
+                         : "\(pet.displayName) Lv.\(pet.level)")
+                        .font(.system(size: 15, weight: .heavy, design: .rounded))
+                        .foregroundStyle(CuteTheme.cream)
+                    Button("✏️") {
+                        nameInput = pet.customName ?? ""
+                        isEditingName = true
+                    }
+                    .buttonStyle(.plain)
+                    .font(.system(size: 11))
+                }
+            }
 
             VStack(spacing: 7) {
                 statRow(icon: "🍚", label: "포만감", value: pet.satiety, total: 100,
