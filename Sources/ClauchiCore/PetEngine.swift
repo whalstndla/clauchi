@@ -148,6 +148,17 @@ public final class PetEngine {
         max(0, calendar.dateComponents([.day], from: state.pet.bornAt, to: now).day ?? 0)
     }
 
+    private func die(now: Date) -> [EngineOutput] {
+        let record = CollectionRecord(species: state.pet.species, result: .died,
+                                      daysLived: daysLived(now: now),
+                                      finalLevel: state.pet.level, endedAt: now)
+        state.collection.append(record)
+        state.pet = Self.newEgg(collection: state.collection, pool: hatchPool,
+                                now: now, random: random)
+        hungryWarned = false
+        return [.petDied(record), .speak(.died)]
+    }
+
     // 1초 주기로 호출되는 시간 틱.
     // 델타를 캡 — 잠자기/앱 정지 공백은 흐르지 않은 시간으로 취급 (스펙 §5)
     public func tick(now: Date) -> [EngineOutput] {
@@ -168,7 +179,10 @@ public final class PetEngine {
             if state.pet.satiety == 0 {
                 if satietyBefore > 0 { outputs.append(.speak(.criticalWarning)) }
                 state.pet.criticalAccumulatedSeconds += delta
-                // 사망 판정은 Task 7에서 추가
+                if state.pet.criticalAccumulatedSeconds >= config.criticalSecondsToDeath {
+                    outputs.append(contentsOf: die(now: now))
+                    return outputs
+                }
             }
         }
         return outputs
