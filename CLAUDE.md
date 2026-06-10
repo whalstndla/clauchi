@@ -39,4 +39,11 @@ Claude Code hooks → clauchi-hook CLI → ~/.clauchi/events.jsonl → Clauchi.a
 
 ## 빌드 / 테스트
 
-(구현 시작 후 SwiftPM/Xcode 구성이 확정되면 이 섹션에 명령어를 추가할 것)
+- 테스트: `Scripts/test.sh` (필터: `Scripts/test.sh --filter PetEngineFeedingTests`)
+  - 주의: 일반 `swift test`는 이 머신(Command Line Tools 전용)에서 Swift Testing
+    모듈을 못 찾아 실패한다. 반드시 래퍼 스크립트 사용.
+- 빌드: `swift build`
+- 개발 실행: `swift run ClauchiApp` 또는 `.build/debug/ClauchiApp` (알약이 노치에 표시됨)
+- 훅 단독 테스트: `echo '{"session_id":"t"}' | swift run ClauchiHook stop`
+- 배포 번들: `Scripts/make-app-bundle.sh` → `build/Clauchi.app`
+- 게임 시뮬레이션 디버그: 앱 알약 클릭 → 펫 탭 → 디버그 섹션 (DEBUG 빌드 전용)

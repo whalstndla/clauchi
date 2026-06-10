@@ -15,6 +15,8 @@ enum HookInstaller {
 
     @MainActor
     static func offerInstallIfNeeded() {
+        // 자동화 테스트/개발 중 모달 차단 방지
+        guard ProcessInfo.processInfo.environment["CLAUCHI_SKIP_HOOK_PROMPT"] != "1" else { return }
         guard !isInstalled else { return }
         let alert = NSAlert()
         alert.messageText = "Claude Code 연동 설정"
