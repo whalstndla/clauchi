@@ -19,6 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             forName: .clauchiPanelToggled, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor in self?.toggleExpandedPanel() }
         }
+        HookInstaller.offerInstallIfNeeded()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
