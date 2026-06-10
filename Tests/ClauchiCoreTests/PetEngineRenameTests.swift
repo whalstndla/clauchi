@@ -30,3 +30,13 @@ import Testing
     #expect(engine.state.collection.first?.customName == "쿠키")
     #expect(engine.state.pet.customName == nil)   // 새 알은 이름 리셋
 }
+
+@Test func deathRecordKeepsCustomName() {
+    let state = TestSupport.makeState(satiety: 0, stage: .adult, level: 5, exp: 0)
+    let engine = TestSupport.makeEngine(state: state)
+    engine.renamePet("쿠키")
+    // 포만감 0 상태로 사망 한계(6시간) 초과 경과 → die() 유도
+    _ = engine.debugAdvance(seconds: 6 * 3600 + 60, from: TestSupport.weekday9am)
+    #expect(engine.state.collection.first?.customName == "쿠키")
+    #expect(engine.state.pet.customName == nil)   // 새 알은 이름 리셋
+}
