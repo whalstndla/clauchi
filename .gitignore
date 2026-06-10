@@ -1,0 +1,11 @@
+# macOS
+.DS_Store
+
+# Xcode / Swift
+.build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+
+# Superpowers brainstorming session files
+.superpowers/
