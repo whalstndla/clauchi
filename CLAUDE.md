@@ -46,4 +46,6 @@ Claude Code hooks → clauchi-hook CLI → ~/.clauchi/events.jsonl → Clauchi.a
 - 개발 실행: `swift run ClauchiApp` 또는 `.build/debug/ClauchiApp` (알약이 노치에 표시됨)
 - 훅 단독 테스트: `echo '{"session_id":"t"}' | swift run ClauchiHook stop`
 - 배포 번들: `Scripts/make-app-bundle.sh` → `build/Clauchi.app`
-- 게임 시뮬레이션 디버그: 앱 알약 클릭 → 펫 탭 → 디버그 섹션 (DEBUG 빌드 전용)
+- 게임 시뮬레이션: UI 디버그 메뉴는 제거됨(사용자 요청) — 엔진의
+  `debugAdvance`/`debugApply`는 테스트 전용 API로 유지. 수동 검증은
+  `~/.clauchi/events.jsonl`에 이벤트 줄을 직접 append 하는 방식 사용

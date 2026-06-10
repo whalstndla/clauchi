@@ -5,6 +5,7 @@ import ClauchiCore
 struct ExpandedPanelView: View {
     @Bindable var model: AppModel
     @State private var selectedTab = 0
+    @State private var rerollArmed = false   // 리세마라 2단계 확인
 
     private let tabs = ["🐾 펫", "📒 도감", "⚙️ 설정"]
 
@@ -108,9 +109,24 @@ struct ExpandedPanelView: View {
             }
             .frame(maxWidth: 220)
 
-            #if DEBUG
-            debugSection
-            #endif
+            // 리세마라 — 성체가 되기 전에만 가능 (스펙 §5)
+            if pet.stage != .adult {
+                SettingChip(label: rerollArmed
+                            ? "정말 새 알로 바꿀까? (한 번 더 클릭)"
+                            : "🔄 리세마라 — 새 알 뽑기",
+                            isOn: rerollArmed) {
+                    if rerollArmed {
+                        rerollArmed = false
+                        model.reroll()
+                    } else {
+                        rerollArmed = true
+                        Task {
+                            try? await Task.sleep(for: .seconds(3))
+                            rerollArmed = false
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -130,27 +146,4 @@ struct ExpandedPanelView: View {
         }
     }
 
-    #if DEBUG
-    private var debugSection: some View {
-        DisclosureGroup {
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    SettingChip(label: "1시간 ▶▶", isOn: false) { model.debugFastForward(3600) }
-                    SettingChip(label: "밥(Stop)", isOn: false) { model.debugInject(.stop) }
-                    SettingChip(label: "작업", isOn: false) { model.debugInject(.toolUse) }
-                }
-                HStack {
-                    SettingChip(label: "알림", isOn: false) { model.debugInject(.notification) }
-                    SettingChip(label: "위독", isOn: false) { model.debugCommand(.setSatiety(0)) }
-                    SettingChip(label: "EXP+50", isOn: false) { model.debugCommand(.grantExp(50)) }
-                }
-            }
-            .padding(.top, 4)
-        } label: {
-            Text("🔧 디버그")
-                .font(.system(size: 10, design: .rounded))
-                .foregroundStyle(.gray)
-        }
-    }
-    #endif
 }

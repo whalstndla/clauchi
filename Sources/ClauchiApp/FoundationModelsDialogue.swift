@@ -77,6 +77,7 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
         case .randomChatter: "심심해서 거는 잡담"
         case .vacationReturn: "휴가에서 막 복귀했다"
         case .petted: "주인이 쓰다듬어줘서 기분이 좋다"
+        case .rerolled: "주인이 새 알을 뽑았다. 새 알의 설렘을 전한다"
         }
     }
 

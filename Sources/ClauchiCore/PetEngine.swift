@@ -7,7 +7,7 @@ public enum VisualState: String, Equatable, Sendable {
 public enum DialogueSituation: String, Equatable, Sendable {
     case greeting, returnGreeting, levelUp, hatched, evolvedToAdult, graduated, died
     case hungryWarning, criticalWarning, permissionWaiting, longWorkBreak
-    case randomChatter, vacationReturn, petted
+    case randomChatter, vacationReturn, petted, rerolled
 }
 
 public enum EngineOutput: Equatable, Sendable {
@@ -60,15 +60,29 @@ public final class PetEngine {
                   lastChatterAt: nil, lastActivityAt: nil, continuousWorkStartedAt: nil)
     }
 
-    // 새 알 — 아직 졸업 못한 종 중 랜덤. 죽은 종은 재도전 가능 (스펙 §5)
+    // 새 알 — 아직 졸업 못한 종 중 랜덤. 죽은 종은 재도전 가능 (스펙 §5).
+    // excluding: 리세마라 시 직전 종 제외 (후보가 그것뿐이면 허용)
     static func newEgg(collection: [CollectionRecord], pool: [Species],
-                       now: Date, random: () -> Double) -> PetState {
+                       now: Date, random: () -> Double,
+                       excluding: Species? = nil) -> PetState {
         let graduatedSpecies = Set(collection.filter { $0.result == .graduated }.map(\.species))
         var candidates = pool.filter { !graduatedSpecies.contains($0) }
+        if let excluding, candidates.count > 1 {
+            candidates.removeAll { $0 == excluding }
+        }
         if candidates.isEmpty { candidates = pool }
         let index = min(Int(random() * Double(candidates.count)), candidates.count - 1)
         return PetState(species: candidates[index], stage: .egg, level: 0, exp: 0,
                         satiety: 100, mood: 80, bornAt: now, criticalAccumulatedSeconds: 0)
+    }
+
+    // 리세마라 — 성체가 되기 전(알/아기)에만 새 알로 다시 뽑기. 기록을 남기지 않는다 (스펙 §5)
+    public func reroll(now: Date) -> [EngineOutput] {
+        guard state.pet.stage != .adult else { return [] }
+        state.pet = Self.newEgg(collection: state.collection, pool: hatchPool,
+                                now: now, random: random, excluding: state.pet.species)
+        hungryWarned = false
+        return [.speak(.rerolled)]
     }
 
     public func handle(_ event: ClaudeEvent) -> [EngineOutput] {

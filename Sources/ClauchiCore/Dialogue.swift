@@ -65,6 +65,8 @@ public struct TemplateDialogueProvider: DialogueProviding {
             ["휴가 잘 다녀왔어! 선물은... 비밀!", "다시 일할 준비 완료!"]
         case .petted:
             ["헤헤, 간지러워!", "더 쓰다듬어줘~ 🐾", "기분 좋아졌어!"]
+        case .rerolled:
+            ["새 알이 도착했어! 두근두근", "다음 친구는 누굴까...?"]
         }
     }
 }

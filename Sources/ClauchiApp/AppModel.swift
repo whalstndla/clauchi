@@ -181,17 +181,9 @@ final class AppModel {
         settings = engine.state.settings
         saveNow()
     }
-    func debugFastForward(_ seconds: TimeInterval) {
-        clock.fastForward(seconds)
-        // 시계 이동만으론 델타 캡에 걸려 무시되므로 엔진 시뮬레이션을 함께 돌린다
-        process(engine.debugAdvance(seconds: seconds, from: clock.now()))
+    // 리세마라 — 알/아기 단계에서 새 알 다시 뽑기 (스펙 §5)
+    func reroll() {
+        process(engine.reroll(now: clock.now()))
         saveNow()
-    }
-    func debugInject(_ kind: ClaudeEventKind) {
-        process(engine.handle(ClaudeEvent(ts: clock.now(), event: kind,
-                                          sessionId: "debug", cwd: nil)))
-    }
-    func debugCommand(_ command: DebugCommand) {
-        process(engine.debugApply(command, now: clock.now()))
     }
 }

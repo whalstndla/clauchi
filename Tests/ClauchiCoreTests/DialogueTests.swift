@@ -5,7 +5,7 @@ import Testing
 private let situations: [DialogueSituation] = [
     .greeting, .returnGreeting, .levelUp, .hatched, .evolvedToAdult, .graduated, .died,
     .hungryWarning, .criticalWarning, .permissionWaiting, .longWorkBreak,
-    .randomChatter, .vacationReturn, .petted,
+    .randomChatter, .vacationReturn, .petted, .rerolled,
 ]
 
 @Test func everySituationHasNonEmptySingleLinePool() {
