@@ -7,10 +7,12 @@ public struct DialogueContext: Equatable, Sendable {
     public var stage: Stage
     public var level: Int
     public var satiety: Int
+    public var mood: Int
     public init(situation: DialogueSituation, petName: String,
-                stage: Stage, level: Int, satiety: Int) {
+                stage: Stage, level: Int, satiety: Int, mood: Int = 50) {
         self.situation = situation; self.petName = petName
         self.stage = stage; self.level = level; self.satiety = satiety
+        self.mood = mood
     }
 }
 
@@ -61,6 +63,8 @@ public struct TemplateDialogueProvider: DialogueProviding {
             ["오늘 코드 잘 짜져?", "버그는 나의 간식!", "심심하다~ 뭐 만들고 있어?"]
         case .vacationReturn:
             ["휴가 잘 다녀왔어! 선물은... 비밀!", "다시 일할 준비 완료!"]
+        case .petted:
+            ["헤헤, 간지러워!", "더 쓰다듬어줘~ 🐾", "기분 좋아졌어!"]
         }
     }
 }

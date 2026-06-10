@@ -25,13 +25,14 @@ struct PillView: View {
                 }
                 Spacer()
                 if model.isHovering {
-                    VStack(alignment: .trailing, spacing: 2) {
+                    VStack(alignment: .trailing, spacing: 3) {
                         Text(petTitle(pet))
-                            .font(.system(size: 9, weight: .semibold))
-                            .foregroundStyle(.white)
+                            .font(.system(size: 9, weight: .bold, design: .rounded))
+                            .foregroundStyle(CuteTheme.cream)
                             .lineLimit(1)
-                        ProgressView(value: pet.satiety, total: 100)
-                            .tint(satietyColor(pet.satiety))
+                        TinyBar(value: pet.satiety, total: 100, color: CuteTheme.green)
+                            .frame(width: 64)
+                        TinyBar(value: pet.mood, total: 100, color: CuteTheme.pink)
                             .frame(width: 64)
                     }
                 }
@@ -67,7 +68,4 @@ struct PillView: View {
         }
     }
 
-    private func satietyColor(_ value: Double) -> Color {
-        value <= 20 ? .red : value <= 50 ? .orange : .green
-    }
 }

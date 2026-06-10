@@ -19,10 +19,11 @@ enum TestSupport {
                               restWeekdays: [], vacationMode: false,
                               dialogueAIEnabled: true, launchAtLogin: false),
                           collection: [CollectionRecord] = [],
+                          mood: Double = 50,   // 중립 — 행복 보너스 미발동 기준
                           now: Date = weekday9am) -> GameState {
         GameState(version: 1,
                   pet: PetState(species: species, stage: stage, level: level, exp: exp,
-                                satiety: satiety, bornAt: now,
+                                satiety: satiety, mood: mood, bornAt: now,
                                 criticalAccumulatedSeconds: 0),
                   collection: collection, settings: settings, eventLogOffset: 0,
                   lastChatterAt: nil, lastActivityAt: nil, continuousWorkStartedAt: nil)

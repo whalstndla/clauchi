@@ -7,7 +7,7 @@ public enum VisualState: String, Equatable, Sendable {
 public enum DialogueSituation: String, Equatable, Sendable {
     case greeting, returnGreeting, levelUp, hatched, evolvedToAdult, graduated, died
     case hungryWarning, criticalWarning, permissionWaiting, longWorkBreak
-    case randomChatter, vacationReturn
+    case randomChatter, vacationReturn, petted
 }
 
 public enum EngineOutput: Equatable, Sendable {
@@ -16,6 +16,7 @@ public enum EngineOutput: Equatable, Sendable {
     case leveledUp(Int)
     case petGraduated(CollectionRecord)
     case petDied(CollectionRecord)
+    case petted                          // 쓰다듬기 성공 — UI 하트 이펙트용
 }
 
 public enum DebugCommand: Sendable {
@@ -34,6 +35,7 @@ public final class PetEngine {
 
     private var lastTickAt: Date?
     private var recentSatietyGains: [(at: Date, amount: Double)] = []
+    private var recentMoodGains: [(at: Date, amount: Double)] = []
     private var workingUntil: Date?
     private var hungryWarned: Bool
     private var lastNotificationSpokeAt: Date?
@@ -66,7 +68,7 @@ public final class PetEngine {
         if candidates.isEmpty { candidates = pool }
         let index = min(Int(random() * Double(candidates.count)), candidates.count - 1)
         return PetState(species: candidates[index], stage: .egg, level: 0, exp: 0,
-                        satiety: 100, bornAt: now, criticalAccumulatedSeconds: 0)
+                        satiety: 100, mood: 80, bornAt: now, criticalAccumulatedSeconds: 0)
     }
 
     public func handle(_ event: ClaudeEvent) -> [EngineOutput] {
@@ -113,7 +115,29 @@ public final class PetEngine {
             state.pet.criticalAccumulatedSeconds = 0
             if state.pet.satiety > config.hungryThreshold { hungryWarned = false }
         }
-        return applyExpGain(config.expPerStop, now: now)
+        // 밥은 기분도 조금 올린다 (알은 제외). 행복하면 EXP 보너스 (스펙 §5)
+        if state.pet.stage != .egg {
+            state.pet.mood = min(100, state.pet.mood + config.moodPerStop)
+        }
+        let happyBonus = state.pet.mood >= config.moodHappyThreshold
+            ? config.happyExpBonusPerStop : 0
+        return applyExpGain(config.expPerStop + happyBonus, now: now)
+    }
+
+    // 쓰다듬기 — 패널의 펫 클릭 (스펙 §5). 알은 반응하지 않는다
+    public func petPet(now: Date) -> [EngineOutput] {
+        guard state.pet.stage != .egg else { return [] }
+        recentMoodGains.removeAll { now.timeIntervalSince($0.at) >= 60 }
+        let gainedLastMinute = recentMoodGains.reduce(0) { $0 + $1.amount }
+        let allowed = max(0, config.moodGainCapPerMinute - gainedLastMinute)
+        let gain = min(config.moodPerPet, allowed)
+        var outputs: [EngineOutput] = [.petted]
+        if gain > 0 {
+            state.pet.mood = min(100, state.pet.mood + gain)
+            recentMoodGains.append((at: now, amount: gain))
+            if random() < 0.3 { outputs.append(.speak(.petted)) }
+        }
+        return outputs
     }
 
     // EXP 획득 → 부화/레벨업/진화/졸업 (스펙 §5 생애 주기)
@@ -126,6 +150,7 @@ public final class PetEngine {
                 state.pet.stage = .baby
                 state.pet.level = 1
                 state.pet.exp = 0
+                state.pet.mood = min(100, state.pet.mood + config.moodPerStageChange)
                 outputs.append(.hatched(state.pet.species))
                 outputs.append(.speak(.hatched))
             }
@@ -133,10 +158,12 @@ public final class PetEngine {
             while state.pet.exp >= config.expToNextLevel(from: state.pet.level) {
                 state.pet.exp -= config.expToNextLevel(from: state.pet.level)
                 state.pet.level += 1
+                state.pet.mood = min(100, state.pet.mood + config.moodPerLevelUp)
                 outputs.append(.leveledUp(state.pet.level))
                 outputs.append(.speak(.levelUp))
                 if state.pet.stage == .baby && state.pet.level >= config.adultLevel {
                     state.pet.stage = .adult
+                    state.pet.mood = min(100, state.pet.mood + config.moodPerStageChange)
                     outputs.append(.speak(.evolvedToAdult))
                 }
                 if state.pet.stage == .adult && state.pet.level >= config.graduateLevel {
@@ -210,6 +237,21 @@ public final class PetEngine {
                     outputs.append(contentsOf: die(now: now))
                     return outputs
                 }
+            }
+        }
+
+        // 기분 변화 — 평시 감소, 배고프면 가속, 휴일엔 회복, 휴가엔 동결 (스펙 §5)
+        if state.pet.stage != .egg {
+            if state.settings.vacationMode {
+                // 휴가: 동결
+            } else if isRestTime(now: now) {
+                state.pet.mood = min(100, state.pet.mood + config.moodRestGainPerHour * delta / 3600)
+            } else {
+                var moodDecayPerHour = config.moodDecayPerHour
+                if state.pet.satiety <= config.hungryThreshold {
+                    moodDecayPerHour += config.moodExtraDecayWhenHungryPerHour
+                }
+                state.pet.mood = max(0, state.pet.mood - moodDecayPerHour * delta / 3600)
             }
         }
 

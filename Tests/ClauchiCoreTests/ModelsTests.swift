@@ -7,7 +7,7 @@ import Testing
     let state = GameState(
         version: 1,
         pet: PetState(species: .tiger, stage: .adult, level: 7, exp: 12,
-                      satiety: 64, bornAt: now, criticalAccumulatedSeconds: 0),
+                      satiety: 64, mood: 70, bornAt: now, criticalAccumulatedSeconds: 0),
         collection: [CollectionRecord(species: .rat, result: .graduated,
                                       daysLived: 14, finalLevel: 30, endedAt: now)],
         settings: .default,

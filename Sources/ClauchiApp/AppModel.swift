@@ -22,6 +22,7 @@ final class AppModel {
     // PetEngine은 @Observable이 아니라서 설정 변경이 SwiftUI에 전파되지 않는다 —
     // 뷰가 읽을 관찰용 스냅샷을 둔다
     private(set) var settings: GameSettings = .default
+    private(set) var heartBurst = 0   // 쓰다듬기 하트 이펙트 트리거
     var isHovering = false {
         didSet { NotificationCenter.default.post(name: .clauchiHoverChanged, object: nil) }
     }
@@ -119,15 +120,23 @@ final class AppModel {
                 recordToast(record: record, situation: .graduated, expression: .happy)
             case .hatched, .leveledUp:
                 break   // 동반되는 speak 출력이 토스트를 담당
+            case .petted:
+                heartBurst += 1   // 하트 이펙트 트리거
             }
         }
+    }
+
+    // 쓰다듬기 — 패널의 펫 클릭 (스펙 §5)
+    func petPet() {
+        process(engine.petPet(now: clock.now()))
     }
 
     private func speakToast(situation: DialogueSituation) {
         let pet = engine.state.pet
         let context = DialogueContext(
             situation: situation, petName: pet.species.koreanName,
-            stage: pet.stage, level: pet.level, satiety: Int(pet.satiety))
+            stage: pet.stage, level: pet.level, satiety: Int(pet.satiety),
+            mood: Int(pet.mood))
         let expression: ClauchiCore.Expression = switch situation {
         case .criticalWarning: .critical
         case .hungryWarning, .longWorkBreak: .sad

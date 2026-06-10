@@ -34,11 +34,19 @@ struct CollectionView: View {
                     }
                     Text(badge(graduated: graduated, died: died, isCurrent: isCurrent,
                                name: species.koreanName))
-                        .font(.system(size: 9))
+                        .font(.system(size: 9, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white)
                         .lineLimit(1)
                 }
-                .opacity(graduated || died || isCurrent ? 1 : 0.35)
+                .padding(.vertical, 6)
+                .frame(maxWidth: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 10).fill(CuteTheme.slot.opacity(0.6)))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .strokeBorder(graduated ? CuteTheme.yellow.opacity(0.7) : .clear,
+                                      lineWidth: 1.5))
+                .opacity(graduated || died || isCurrent ? 1 : 0.4)
             }
         }
     }

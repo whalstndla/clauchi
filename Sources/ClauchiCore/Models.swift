@@ -44,13 +44,33 @@ public struct PetState: Codable, Equatable, Sendable {
     public var level: Int
     public var exp: Int                 // 현재 레벨에서 쌓은 EXP (레벨업 시 차감)
     public var satiety: Double          // 0...100
+    public var mood: Double             // 0...100 — 쓰다듬기/레벨업으로 상승 (스펙 §5)
     public var bornAt: Date
     public var criticalAccumulatedSeconds: TimeInterval
     public init(species: Species, stage: Stage, level: Int, exp: Int,
-                satiety: Double, bornAt: Date, criticalAccumulatedSeconds: TimeInterval) {
+                satiety: Double, mood: Double, bornAt: Date,
+                criticalAccumulatedSeconds: TimeInterval) {
         self.species = species; self.stage = stage; self.level = level; self.exp = exp
-        self.satiety = satiety; self.bornAt = bornAt
+        self.satiety = satiety; self.mood = mood; self.bornAt = bornAt
         self.criticalAccumulatedSeconds = criticalAccumulatedSeconds
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case species, stage, level, exp, satiety, mood, bornAt, criticalAccumulatedSeconds
+    }
+
+    // mood 가 없는 v1 세이브 마이그레이션 — 기본 80 (스펙 §9 버전 대비)
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        species = try container.decode(Species.self, forKey: .species)
+        stage = try container.decode(Stage.self, forKey: .stage)
+        level = try container.decode(Int.self, forKey: .level)
+        exp = try container.decode(Int.self, forKey: .exp)
+        satiety = try container.decode(Double.self, forKey: .satiety)
+        mood = try container.decodeIfPresent(Double.self, forKey: .mood) ?? 80
+        bornAt = try container.decode(Date.self, forKey: .bornAt)
+        criticalAccumulatedSeconds =
+            try container.decode(TimeInterval.self, forKey: .criticalAccumulatedSeconds)
     }
 }
 

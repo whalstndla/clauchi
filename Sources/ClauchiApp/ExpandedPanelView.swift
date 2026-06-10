@@ -1,20 +1,33 @@
 import SwiftUI
 import ClauchiCore
 
-// 알약 클릭 시 노치 아래로 열리는 패널 (스펙 §7)
+// 알약 클릭 시 노치 아래로 열리는 패널 — 다마고치풍 (스펙 §7)
 struct ExpandedPanelView: View {
     @Bindable var model: AppModel
     @State private var selectedTab = 0
 
+    private let tabs = ["🐾 펫", "📒 도감", "⚙️ 설정"]
+
     var body: some View {
         VStack(spacing: 12) {
-            Picker("", selection: $selectedTab) {
-                Text("펫").tag(0)
-                Text("도감").tag(1)
-                Text("설정").tag(2)
+            // 탭 — 비활성 창에서도 색이 살아있는 커스텀 칩
+            HStack(spacing: 6) {
+                ForEach(tabs.indices, id: \.self) { index in
+                    Button {
+                        selectedTab = index
+                    } label: {
+                        Text(tabs[index])
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .foregroundStyle(selectedTab == index ? .black : .white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(
+                                Capsule().fill(selectedTab == index
+                                               ? CuteTheme.yellow : CuteTheme.slot))
+                    }
+                    .buttonStyle(.plain)
+                }
             }
-            .pickerStyle(.segmented)
-            .labelsHidden()
 
             switch selectedTab {
             case 0: petTab
@@ -27,44 +40,73 @@ struct ExpandedPanelView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
             UnevenRoundedRectangle(bottomLeadingRadius: 22, bottomTrailingRadius: 22)
-                .fill(Color.black))
+                .fill(CuteTheme.panelBackground))
+        .overlay(
+            UnevenRoundedRectangle(bottomLeadingRadius: 22, bottomTrailingRadius: 22)
+                .strokeBorder(CuteTheme.border, lineWidth: 1))
         .preferredColorScheme(.dark)
     }
 
     private var petTab: some View {
         let pet = model.engine.state.pet
-        let expression: ClauchiCore.Expression = switch model.visualState {
-        case .critical: .critical
-        case .hungry, .sleeping: .sad
+        let config = model.engine.config
+        let expression: ClauchiCore.Expression = switch true {
+        case _ where model.visualState == .critical: .critical
+        case _ where model.visualState == .hungry || model.visualState == .sleeping: .sad
+        case _ where pet.mood <= config.moodSadThreshold: .sad
         default: .happy
         }
-        return VStack(spacing: 10) {
-            if let grid = SpriteLibrary.spriteSet(for: pet.species, stage: pet.stage)
-                .large[expression] {
-                Image(nsImage: SpriteImageFactory.image(
-                    for: grid,
-                    cacheKey: "L-\(pet.species.rawValue)-\(pet.stage.rawValue)-\(expression.rawValue)"))
-                    .resizable()
-                    .interpolation(.none)
-                    .frame(width: 96, height: 96)
+
+        return VStack(spacing: 12) {
+            // 다마고치 "화면" — 밤하늘 스크린 안에 펫. 클릭하면 쓰다듬기
+            ZStack {
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(LinearGradient(colors: [CuteTheme.screenTop, CuteTheme.screenBottom],
+                                         startPoint: .top, endPoint: .bottom))
+                VStack(spacing: 6) {
+                    if let grid = SpriteLibrary.spriteSet(for: pet.species, stage: pet.stage)
+                        .large[expression] {
+                        Image(nsImage: SpriteImageFactory.image(
+                            for: grid,
+                            cacheKey: "L-\(pet.species.rawValue)-\(pet.stage.rawValue)-\(expression.rawValue)"))
+                            .resizable()
+                            .interpolation(.none)
+                            .frame(width: 96, height: 96)
+                    }
+                    Text(pet.stage == .egg ? "...무언가 꿈틀거린다" : "콕 눌러서 쓰다듬기 💕")
+                        .font(.system(size: 9, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.45))
+                }
+                HeartBurst(trigger: model.heartBurst)
             }
+            .frame(height: 150)
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .strokeBorder(CuteTheme.cream.opacity(0.25),
+                                  style: StrokeStyle(lineWidth: 1.5, dash: [4, 3])))
+            .contentShape(Rectangle())
+            .onTapGesture { model.petPet() }
+
             Text(pet.stage == .egg ? "부화를 기다리는 알" : "\(pet.species.koreanName) Lv.\(pet.level)")
-                .font(.headline)
-                .foregroundStyle(.white)
+                .font(.system(size: 15, weight: .heavy, design: .rounded))
+                .foregroundStyle(CuteTheme.cream)
 
-            statRow(label: "포만감", value: pet.satiety, total: 100,
-                    tint: pet.satiety <= 20 ? .red : .green)
-            statRow(label: "EXP",
-                    value: Double(pet.exp),
-                    total: Double(pet.stage == .egg
-                                  ? model.engine.config.hatchExp
-                                  : model.engine.config.expToNextLevel(from: pet.level)),
-                    tint: .yellow)
+            VStack(spacing: 7) {
+                statRow(icon: "🍚", label: "포만감", value: pet.satiety, total: 100,
+                        color: CuteTheme.green)
+                statRow(icon: "💖", label: "기분", value: pet.mood, total: 100,
+                        color: CuteTheme.pink)
+                statRow(icon: "⭐", label: "EXP", value: Double(pet.exp),
+                        total: Double(pet.stage == .egg
+                                      ? config.hatchExp
+                                      : config.expToNextLevel(from: pet.level)),
+                        color: CuteTheme.yellow)
+            }
 
-            SettingSwitchRow(label: "휴가 모드", isOn: model.settings.vacationMode) { on in
+            SettingSwitchRow(label: "🏖️ 휴가 모드", isOn: model.settings.vacationMode) { on in
                 model.toggleVacation(on)
             }
-            .frame(maxWidth: 200)
+            .frame(maxWidth: 220)
 
             #if DEBUG
             debugSection
@@ -72,35 +114,43 @@ struct ExpandedPanelView: View {
         }
     }
 
-    private func statRow(label: String, value: Double, total: Double, tint: Color) -> some View {
-        HStack {
-            Text(label).font(.caption).foregroundStyle(.gray)
-                .frame(width: 44, alignment: .leading)
-            ProgressView(value: min(value, total), total: total).tint(tint)
+    private func statRow(icon: String, label: String, value: Double,
+                         total: Double, color: Color) -> some View {
+        HStack(spacing: 6) {
+            Text(icon).font(.system(size: 11))
+            Text(label)
+                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.75))
+                .frame(width: 40, alignment: .leading)
+            PixelBar(value: min(value, total), total: total, color: color)
             Text("\(Int(value))/\(Int(total))")
-                .font(.caption2.monospacedDigit())
-                .foregroundStyle(.gray)
+                .font(.system(size: 9, design: .monospaced))
+                .foregroundStyle(.white.opacity(0.55))
+                .frame(width: 44, alignment: .trailing)
         }
     }
 
     #if DEBUG
     private var debugSection: some View {
-        DisclosureGroup("디버그") {
+        DisclosureGroup {
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Button("1시간 ▶▶") { model.debugFastForward(3600) }
-                    Button("밥(Stop)") { model.debugInject(.stop) }
-                    Button("작업") { model.debugInject(.toolUse) }
+                    SettingChip(label: "1시간 ▶▶", isOn: false) { model.debugFastForward(3600) }
+                    SettingChip(label: "밥(Stop)", isOn: false) { model.debugInject(.stop) }
+                    SettingChip(label: "작업", isOn: false) { model.debugInject(.toolUse) }
                 }
                 HStack {
-                    Button("알림") { model.debugInject(.notification) }
-                    Button("위독") { model.debugCommand(.setSatiety(0)) }
-                    Button("EXP+50") { model.debugCommand(.grantExp(50)) }
+                    SettingChip(label: "알림", isOn: false) { model.debugInject(.notification) }
+                    SettingChip(label: "위독", isOn: false) { model.debugCommand(.setSatiety(0)) }
+                    SettingChip(label: "EXP+50", isOn: false) { model.debugCommand(.grantExp(50)) }
                 }
             }
+            .padding(.top, 4)
+        } label: {
+            Text("🔧 디버그")
+                .font(.system(size: 10, design: .rounded))
+                .foregroundStyle(.gray)
         }
-        .font(.caption)
-        .foregroundStyle(.gray)
     }
     #endif
 }

@@ -17,8 +17,8 @@ struct ToastView: View {
                     .frame(width: 48, height: 48)
             }
             Text(toast.text)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.white)
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .foregroundStyle(CuteTheme.cream)
                 .fixedSize(horizontal: false, vertical: true)
             Spacer(minLength: 0)
         }
@@ -26,7 +26,18 @@ struct ToastView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
             UnevenRoundedRectangle(bottomLeadingRadius: 18, bottomTrailingRadius: 18)
-                .fill(Color.black))
+                .fill(CuteTheme.panelBackground))
+        .overlay(
+            UnevenRoundedRectangle(bottomLeadingRadius: 18, bottomTrailingRadius: 18)
+                .strokeBorder(accentColor.opacity(0.6), lineWidth: 1.5))
         .onTapGesture(perform: onTap)
+    }
+
+    private var accentColor: Color {
+        switch toast.expression {
+        case .happy: CuteTheme.green
+        case .sad: CuteTheme.yellow
+        case .critical: CuteTheme.pink
+        }
     }
 }

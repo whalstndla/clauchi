@@ -20,6 +20,19 @@ public struct GameConfig: Codable, Equatable, Sendable {
     public var greetingGapSeconds: TimeInterval = 1800
     public var notificationSpeakCooldownSeconds: TimeInterval = 300
 
+    // 기분 (스펙 §5 — 사용자 요청으로 관리 스탯으로 승격)
+    public var moodPerPet: Double = 10                // 쓰다듬기 1회
+    public var moodGainCapPerMinute: Double = 20      // 쓰다듬기 분당 상한
+    public var moodPerStop: Double = 2                // 밥 먹을 때
+    public var moodPerLevelUp: Double = 15
+    public var moodPerStageChange: Double = 30        // 부화/진화
+    public var moodDecayPerHour: Double = 5
+    public var moodExtraDecayWhenHungryPerHour: Double = 10
+    public var moodRestGainPerHour: Double = 5        // 휴일에 놀면서 회복
+    public var moodHappyThreshold: Double = 70        // 이상이면 EXP 보너스
+    public var moodSadThreshold: Double = 25          // 이하면 시무룩 표정
+    public var happyExpBonusPerStop: Int = 1
+
     public static let `default` = GameConfig()
     public init() {}
 

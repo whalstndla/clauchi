@@ -57,7 +57,7 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
         """
 
     static func prompt(for context: DialogueContext) -> String {
-        "너는 \(context.petName)(Lv.\(context.level), 포만감 \(context.satiety)/100). " +
+        "너는 \(context.petName)(Lv.\(context.level), 포만감 \(context.satiety)/100, 기분 \(context.mood)/100). " +
         "상황: \(situationDescription(context.situation)). 지금 주인에게 할 한마디:"
     }
 
@@ -76,6 +76,7 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
         case .longWorkBreak: "주인이 1시간 넘게 연속 작업 중. 휴식 권유"
         case .randomChatter: "심심해서 거는 잡담"
         case .vacationReturn: "휴가에서 막 복귀했다"
+        case .petted: "주인이 쓰다듬어줘서 기분이 좋다"
         }
     }
 
