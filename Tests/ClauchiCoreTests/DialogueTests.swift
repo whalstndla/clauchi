@@ -36,3 +36,10 @@ private let situations: [DialogueSituation] = [
     #expect(line.contains("12"))
     #expect(!line.contains("{level}"))
 }
+
+@Test func promptReactionPoolExists() async {
+    let provider = TemplateDialogueProvider(random: { 0 })
+    let line = await provider.line(for: DialogueContext(
+        situation: .promptReaction, petName: "쿠키", stage: .adult, level: 5, satiety: 80))
+    #expect(!line.isEmpty)
+}

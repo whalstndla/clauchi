@@ -8,11 +8,13 @@ public struct DialogueContext: Equatable, Sendable {
     public var level: Int
     public var satiety: Int
     public var mood: Int
+    public var userPrompt: String?
     public init(situation: DialogueSituation, petName: String,
-                stage: Stage, level: Int, satiety: Int, mood: Int = 50) {
+                stage: Stage, level: Int, satiety: Int, mood: Int = 50,
+                userPrompt: String? = nil) {
         self.situation = situation; self.petName = petName
         self.stage = stage; self.level = level; self.satiety = satiety
-        self.mood = mood
+        self.mood = mood; self.userPrompt = userPrompt
     }
 }
 
@@ -67,6 +69,9 @@ public struct TemplateDialogueProvider: DialogueProviding {
             ["헤헤, 간지러워!", "더 쓰다듬어줘~ 🐾", "기분 좋아졌어!"]
         case .rerolled:
             ["새 알이 도착했어! 두근두근", "다음 친구는 누굴까...?"]
+        case .promptReaction:
+            ["오 그거 재밌겠다! 화이팅!", "접수 완료! Claude가 열심히 할 거야",
+             "그 작업 끝나면 밥 주는 거지? 🍚"]
         }
     }
 }

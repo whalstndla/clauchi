@@ -57,8 +57,13 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
         """
 
     static func prompt(for context: DialogueContext) -> String {
-        "너는 \(context.petName)(Lv.\(context.level), 포만감 \(context.satiety)/100, 기분 \(context.mood)/100). " +
-        "상황: \(situationDescription(context.situation)). 지금 주인에게 할 한마디:"
+        let base = "너는 \(context.petName)(Lv.\(context.level), 포만감 \(context.satiety)/100, " +
+                   "기분 \(context.mood)/100). "
+        if let userPrompt = context.userPrompt {
+            return base + "주인이 방금 Claude에게 시킨 작업: \"\(userPrompt)\". " +
+                          "이 작업에 대해 펫답게 응원/반응 한마디:"
+        }
+        return base + "상황: \(situationDescription(context.situation)). 지금 주인에게 할 한마디:"
     }
 
     static func situationDescription(_ situation: DialogueSituation) -> String {
@@ -78,6 +83,7 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
         case .vacationReturn: "휴가에서 막 복귀했다"
         case .petted: "주인이 쓰다듬어줘서 기분이 좋다"
         case .rerolled: "주인이 새 알을 뽑았다. 새 알의 설렘을 전한다"
+        case .promptReaction: "주인이 방금 Claude에게 새 작업을 시켰다"
         }
     }
 

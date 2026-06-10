@@ -7,11 +7,12 @@ public enum VisualState: String, Equatable, Sendable {
 public enum DialogueSituation: String, Equatable, Sendable {
     case greeting, returnGreeting, levelUp, hatched, evolvedToAdult, graduated, died
     case hungryWarning, criticalWarning, permissionWaiting, longWorkBreak
-    case randomChatter, vacationReturn, petted, rerolled
+    case randomChatter, vacationReturn, petted, rerolled, promptReaction
 }
 
 public enum EngineOutput: Equatable, Sendable {
     case speak(DialogueSituation)
+    case reactToPrompt(String)           // 주인의 Claude 프롬프트에 한마디 (스펙 §3)
     case hatched(Species)
     case leveledUp(Int)
     case petGraduated(CollectionRecord)
@@ -39,6 +40,7 @@ public final class PetEngine {
     private var workingUntil: Date?
     private var hungryWarned: Bool
     private var lastNotificationSpokeAt: Date?
+    private var lastPromptReactionAt: Date?
 
     public init(config: GameConfig = .default, state: GameState,
                 hatchPool: [Species], calendar: Calendar = .current,
@@ -119,8 +121,15 @@ public final class PetEngine {
                 lastNotificationSpokeAt = now
             }
         case .userPrompt:
-            // Task 7에서 구현 — 지금은 no-op
-            break
+            if let prompt = event.prompt,
+               !prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                let cooldownOver = lastPromptReactionAt
+                    .map { now.timeIntervalSince($0) >= config.promptReactionCooldownSeconds } ?? true
+                if cooldownOver {
+                    outputs.append(.reactToPrompt(prompt))
+                    lastPromptReactionAt = now
+                }
+            }
         }
         state.lastActivityAt = now
         return outputs

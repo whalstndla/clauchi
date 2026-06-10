@@ -122,6 +122,8 @@ final class AppModel {
                 break   // 동반되는 speak 출력이 토스트를 담당
             case .petted:
                 heartBurst += 1   // 하트 이펙트 트리거
+            case .reactToPrompt(let promptText):
+                promptReactionToast(promptText: promptText)
             }
         }
     }
@@ -143,6 +145,17 @@ final class AppModel {
         default: .happy
         }
         enqueueDialogueToast(context: context, expression: expression,
+                             species: pet.species, stage: pet.stage)
+    }
+
+    // 주인의 프롬프트에 펫이 한마디 (스펙 §3)
+    private func promptReactionToast(promptText: String) {
+        let pet = engine.state.pet
+        let context = DialogueContext(
+            situation: .promptReaction, petName: pet.displayName,
+            stage: pet.stage, level: pet.level, satiety: Int(pet.satiety),
+            mood: Int(pet.mood), userPrompt: promptText)
+        enqueueDialogueToast(context: context, expression: .happy,
                              species: pet.species, stage: pet.stage)
     }
 

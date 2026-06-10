@@ -19,6 +19,7 @@ public struct GameConfig: Codable, Equatable, Sendable {
     public var returnGreetingAfterSeconds: TimeInterval = 8 * 3600
     public var greetingGapSeconds: TimeInterval = 1800
     public var notificationSpeakCooldownSeconds: TimeInterval = 300
+    public var promptReactionCooldownSeconds: TimeInterval = 90   // 프롬프트 반응 쿨다운
 
     // 기분 (스펙 §5 — 사용자 요청으로 관리 스탯으로 승격)
     public var moodPerPet: Double = 10                // 쓰다듬기 1회
