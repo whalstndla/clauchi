@@ -16,8 +16,11 @@ public struct SpriteSet: Sendable {
 }
 
 public enum SpriteLibrary {
-    // 1차 구현 4종 (스펙 §8) — 종 추가 시 이 배열과 스프라이트 파일만 추가하면 됨
-    public static let implementedSpecies: [Species] = [.rat, .ox, .tiger, .rabbit]
+    // 12지신 전종 구현 완료
+    public static let implementedSpecies: [Species] = [
+        .rat, .ox, .tiger, .rabbit, .dragon, .snake,
+        .horse, .goat, .monkey, .rooster, .dog, .pig,
+    ]
 
     public static let requiredSmallStates: [VisualState] =
         [.idle, .working, .sleeping, .hungry, .critical, .playing]
@@ -25,11 +28,18 @@ public enum SpriteLibrary {
     // 종별 메인 색 (아기 틴트 + UI 포인트 컬러)
     public static func primaryColor(of species: Species) -> UInt32 {
         switch species {
-        case .rat: 0x9CA3AFFF
-        case .ox: 0xB45309FF
-        case .tiger: 0xF59E42FF
-        case .rabbit: 0xE5E7EBFF
-        default: 0xF59E42FF   // 미구현 종은 부화 풀에 없어 도달 불가
+        case .rat:     0x9CA3AFFF
+        case .ox:      0xB45309FF
+        case .tiger:   0xF59E42FF
+        case .rabbit:  0xE5E7EBFF
+        case .dragon:  0x22C55EFF
+        case .snake:   0x84CC16FF
+        case .horse:   0xA16207FF
+        case .goat:    0xF5F5F4FF
+        case .monkey:  0x92400EFF
+        case .rooster: 0xFBBF24FF
+        case .dog:     0xD97706FF
+        case .pig:     0xFDA4AFFF
         }
     }
 
@@ -43,11 +53,18 @@ public enum SpriteLibrary {
 
     private static func adultSet(for species: Species) -> SpriteSet {
         switch species {
-        case .rat: RatSprites.set
-        case .ox: OxSprites.set
-        case .tiger: TigerSprites.set
-        case .rabbit: RabbitSprites.set
-        default: RatSprites.set
+        case .rat:     RatSprites.set
+        case .ox:      OxSprites.set
+        case .tiger:   TigerSprites.set
+        case .rabbit:  RabbitSprites.set
+        case .dragon:  DragonSprites.set
+        case .snake:   SnakeSprites.set
+        case .horse:   HorseSprites.set
+        case .goat:    GoatSprites.set
+        case .monkey:  MonkeySprites.set
+        case .rooster: RoosterSprites.set
+        case .dog:     DogSprites.set
+        case .pig:     PigSprites.set
         }
     }
 }
