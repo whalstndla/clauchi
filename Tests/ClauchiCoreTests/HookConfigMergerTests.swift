@@ -4,15 +4,27 @@ import Testing
 
 private let binaryPath = "/Users/me/.clauchi/bin/clauchi-hook"
 
-@Test func mergeIntoEmptySettingsAddsFourEvents() {
+@Test func mergeIntoEmptySettingsAddsFiveEvents() {
     let merged = HookConfigMerger.merged(settings: [:], hookBinaryPath: binaryPath)
     let hooks = merged["hooks"] as? [String: Any]
-    for event in ["SessionStart", "PostToolUse", "Stop", "Notification"] {
+    for event in ["SessionStart", "PostToolUse", "Stop", "Notification", "UserPromptSubmit"] {
         #expect((hooks?[event] as? [[String: Any]])?.count == 1, "\(event)")
     }
-    let stopEntry = (hooks?["Stop"] as? [[String: Any]])?.first
-    let command = ((stopEntry?["hooks"] as? [[String: Any]])?.first?["command"] as? String)
-    #expect(command == "\(binaryPath) stop")
+    let promptEntry = (hooks?["UserPromptSubmit"] as? [[String: Any]])?.first
+    let command = ((promptEntry?["hooks"] as? [[String: Any]])?.first?["command"] as? String)
+    #expect(command == "\(binaryPath) user-prompt")
+}
+
+@Test func mergeAddsMissingUserPromptToExistingInstall() {
+    // 구버전(4개 이벤트) 설치 상태 → 재병합하면 UserPromptSubmit만 추가
+    var old = HookConfigMerger.merged(settings: [:], hookBinaryPath: binaryPath)
+    var hooks = (old["hooks"] as? [String: Any]) ?? [:]
+    hooks.removeValue(forKey: "UserPromptSubmit")
+    old["hooks"] = hooks
+    let upgraded = HookConfigMerger.merged(settings: old, hookBinaryPath: binaryPath)
+    let upgradedHooks = upgraded["hooks"] as? [String: Any]
+    #expect((upgradedHooks?["UserPromptSubmit"] as? [[String: Any]])?.count == 1)
+    #expect((upgradedHooks?["Stop"] as? [[String: Any]])?.count == 1)   // 중복 없음
 }
 
 @Test func mergeIsIdempotent() {

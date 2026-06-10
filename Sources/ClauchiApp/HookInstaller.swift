@@ -17,11 +17,12 @@ enum HookInstaller {
     static func offerInstallIfNeeded() {
         // 자동화 테스트/개발 중 모달 차단 방지
         guard ProcessInfo.processInfo.environment["CLAUCHI_SKIP_HOOK_PROMPT"] != "1" else { return }
-        guard !isInstalled else { return }
+        // 이미 설치됨 — 새 훅 이벤트 추가/바이너리 갱신을 조용히 재병합 (멱등)
+        guard !isInstalled else { try? install(); return }
         let alert = NSAlert()
         alert.messageText = "Claude Code 연동 설정"
         alert.informativeText = """
-            펫이 Claude Code 활동을 느끼려면 ~/.claude/settings.json 에 훅 4개를 \
+            펫이 Claude Code 활동을 느끼려면 ~/.claude/settings.json 에 훅 5개를 \
             등록해야 합니다. 기존 설정은 건드리지 않으며, 설정 탭에서 언제든 제거할 수 있습니다.
             """
         alert.addButton(withTitle: "등록")

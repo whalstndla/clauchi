@@ -9,6 +9,7 @@ public enum HookConfigMerger {
         ("PostToolUse", "tool-use"),
         ("Stop", "stop"),
         ("Notification", "notification"),
+        ("UserPromptSubmit", "user-prompt"),
     ]
 
     public static func merged(settings: [String: Any], hookBinaryPath: String) -> [String: Any] {
