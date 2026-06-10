@@ -12,7 +12,7 @@ public enum DialogueSituation: String, Equatable, Sendable {
 
 public enum EngineOutput: Equatable, Sendable {
     case speak(DialogueSituation)
-    case reactToPrompt(String)           // 주인의 Claude 프롬프트에 한마디 (스펙 §3)
+    case reactToPrompt(String, Date)     // 프롬프트 텍스트 + 이벤트 시각 — 리플레이 신선도 필터용 (스펙 §3)
     case hatched(Species)
     case leveledUp(Int)
     case petGraduated(CollectionRecord)
@@ -126,7 +126,7 @@ public final class PetEngine {
                 let cooldownOver = lastPromptReactionAt
                     .map { now.timeIntervalSince($0) >= config.promptReactionCooldownSeconds } ?? true
                 if cooldownOver {
-                    outputs.append(.reactToPrompt(prompt))
+                    outputs.append(.reactToPrompt(prompt, now))
                     lastPromptReactionAt = now
                 }
             }

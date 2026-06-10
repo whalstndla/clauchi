@@ -60,10 +60,19 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
         let base = "너는 \(context.petName)(Lv.\(context.level), 포만감 \(context.satiety)/100, " +
                    "기분 \(context.mood)/100). "
         if let userPrompt = context.userPrompt {
-            return base + "주인이 방금 Claude에게 시킨 작업: \"\(userPrompt)\". " +
+            return base + "주인이 방금 Claude에게 시킨 작업: \"\(Self.sanitizeInput(userPrompt))\". " +
                           "이 작업에 대해 펫답게 응원/반응 한마디:"
         }
         return base + "상황: \(situationDescription(context.situation)). 지금 주인에게 할 한마디:"
+    }
+
+    // 사용자 프롬프트를 모델 프롬프트에 끼우기 전 정제 — 따옴표 프레임 깨짐/줄바꿈 방지
+    static func sanitizeInput(_ raw: String) -> String {
+        let cleaned = raw
+            .replacingOccurrences(of: "\"", with: "'")
+            .replacingOccurrences(of: "\n", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return cleaned.count > 120 ? String(cleaned.prefix(120)) : cleaned
     }
 
     static func situationDescription(_ situation: DialogueSituation) -> String {

@@ -122,8 +122,11 @@ final class AppModel {
                 break   // 동반되는 speak 출력이 토스트를 담당
             case .petted:
                 heartBurst += 1   // 하트 이펙트 트리거
-            case .reactToPrompt(let promptText):
-                promptReactionToast(promptText: promptText)
+            case .reactToPrompt(let promptText, let at):
+                // 오프라인 백로그 리플레이 — 오래된 프롬프트엔 반응하지 않는다
+                if clock.now().timeIntervalSince(at) <= engine.config.promptReactionFreshnessSeconds {
+                    promptReactionToast(promptText: promptText)
+                }
             }
         }
     }
