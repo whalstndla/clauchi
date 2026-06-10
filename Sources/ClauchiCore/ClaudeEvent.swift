@@ -5,6 +5,7 @@ public enum ClaudeEventKind: String, Codable, Equatable, Sendable {
     case toolUse = "tool-use"
     case stop = "stop"
     case notification = "notification"
+    case userPrompt = "user-prompt"
 }
 
 // clauchi-hook 이 기록하고 앱이 읽는 events.jsonl 한 줄
@@ -13,8 +14,10 @@ public struct ClaudeEvent: Codable, Equatable, Sendable {
     public var event: ClaudeEventKind
     public var sessionId: String
     public var cwd: String?
-    public init(ts: Date, event: ClaudeEventKind, sessionId: String, cwd: String?) {
-        self.ts = ts; self.event = event; self.sessionId = sessionId; self.cwd = cwd
+    // user-prompt 이벤트 전용 — 앞 200자
+    public var prompt: String?
+    public init(ts: Date, event: ClaudeEventKind, sessionId: String, cwd: String? = nil, prompt: String? = nil) {
+        self.ts = ts; self.event = event; self.sessionId = sessionId; self.cwd = cwd; self.prompt = prompt
     }
 
     // 깨진 줄은 nil — 호출부가 조용히 건너뛴다 (스펙 §10)

@@ -118,6 +118,9 @@ public final class PetEngine {
                 outputs.append(.speak(.permissionWaiting))
                 lastNotificationSpokeAt = now
             }
+        case .userPrompt:
+            // Task 7에서 구현 — 지금은 no-op
+            break
         }
         state.lastActivityAt = now
         return outputs

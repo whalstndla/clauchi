@@ -22,3 +22,15 @@ import Testing
     #expect(!line.contains("\n"))
     #expect(ClaudeEvent.fromJSONLine(Data(line.utf8))?.event == .toolUse)
 }
+
+@Test func decodesUserPromptLine() {
+    let line = #"{"ts":"2026-06-10T10:24:31Z","event":"user-prompt","sessionId":"abc","prompt":"버그 수정해줘"}"#
+    let event = ClaudeEvent.fromJSONLine(Data(line.utf8))
+    #expect(event?.event == .userPrompt)
+    #expect(event?.prompt == "버그 수정해줘")
+}
+
+@Test func promptFieldDefaultsToNilOnOldLines() {
+    let line = #"{"ts":"2026-06-10T10:24:31Z","event":"stop","sessionId":"abc"}"#
+    #expect(ClaudeEvent.fromJSONLine(Data(line.utf8))?.prompt == nil)
+}
