@@ -53,6 +53,45 @@ import Testing
     #expect(ratBaby.small[.idle]?[0].pixels != tigerBaby.small[.idle]?[0].pixels)
 }
 
+@Test func adultSpritesCompleteForAllImplementedSpecies() {
+    for species in SpriteLibrary.implementedSpecies {
+        let set = SpriteLibrary.spriteSet(for: species, stage: .adult)
+        for state in SpriteLibrary.requiredSmallStates {
+            let frames = set.small[state]
+            #expect(frames?.count == 2, "\(species) adult \(state)")
+            for frame in frames ?? [] { #expect(frame.width == 16 && frame.height == 16) }
+        }
+        for expression in Expression.allCases {
+            let large = set.large[expression]
+            #expect(large?.width == 32 && large?.height == 32, "\(species) \(expression)")
+        }
+    }
+}
+
+@Test func adultSpeciesLookDifferent() {
+    let species = SpriteLibrary.implementedSpecies
+    for (index, first) in species.enumerated() {
+        for second in species[(index + 1)...] {
+            let firstIdle = SpriteLibrary.spriteSet(for: first, stage: .adult).small[.idle]![0]
+            let secondIdle = SpriteLibrary.spriteSet(for: second, stage: .adult).small[.idle]![0]
+            #expect(firstIdle != secondIdle, "\(first) vs \(second)")
+        }
+    }
+}
+
+// 핵심 게이트 — 임시 구현(아기 차용)은 틴트 차이로 위 테스트를 통과해버리므로,
+// 성체 도트가 아기 도트와 실제로 다른지 + 32×32가 수작업인지 검사한다 (스펙 §8)
+@Test func adultArtDiffersFromBabyArt() {
+    for species in SpriteLibrary.implementedSpecies {
+        let adultIdle = SpriteLibrary.spriteSet(for: species, stage: .adult).small[.idle]![0]
+        let babyIdle = SpriteLibrary.spriteSet(for: species, stage: .baby).small[.idle]![0]
+        #expect(adultIdle != babyIdle, "\(species) 성체가 아직 아기 도트를 차용 중")
+        let adultLarge = SpriteLibrary.spriteSet(for: species, stage: .adult).large[.happy]!
+        #expect(adultLarge != adultIdle.scaled(by: 2),
+                "\(species) 32×32가 단순 확대본 — 수작업 도트 필요")
+    }
+}
+
 @Test func babyStatesAreVisuallyDistinct() {
     let set = SpriteLibrary.spriteSet(for: .rat, stage: .baby)
     let idle = set.small[.idle]![0]
