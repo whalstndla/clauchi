@@ -74,14 +74,28 @@ public final class PetEngine {
         let now = event.ts
         switch event.event {
         case .sessionStart:
-            break   // Task 9에서 인사 구현
+            if let last = state.lastActivityAt {
+                let gap = now.timeIntervalSince(last)
+                if gap >= config.returnGreetingAfterSeconds {
+                    outputs.append(.speak(.returnGreeting))
+                } else if gap >= config.greetingGapSeconds {
+                    outputs.append(.speak(.greeting))
+                }
+            } else {
+                outputs.append(.speak(.greeting))
+            }
         case .toolUse:
             workingUntil = now.addingTimeInterval(config.workingWindowSeconds)
             if state.continuousWorkStartedAt == nil { state.continuousWorkStartedAt = now }
         case .stop:
             outputs.append(contentsOf: applyFeeding(now: now))
         case .notification:
-            break   // Task 9에서 구현
+            let cooldownOver = lastNotificationSpokeAt
+                .map { now.timeIntervalSince($0) >= config.notificationSpeakCooldownSeconds } ?? true
+            if cooldownOver {
+                outputs.append(.speak(.permissionWaiting))
+                lastNotificationSpokeAt = now
+            }
         }
         state.lastActivityAt = now
         return outputs
@@ -169,6 +183,18 @@ public final class PetEngine {
         lastTickAt = now
         var outputs: [EngineOutput] = []
 
+        // 연속 작업 추적 — 1시간 넘으면 휴식 권유 (스펙 §5)
+        if let until = workingUntil {
+            if now.timeIntervalSince(until) > 300 {
+                workingUntil = nil
+                state.continuousWorkStartedAt = nil
+            } else if let workStart = state.continuousWorkStartedAt,
+                      now.timeIntervalSince(workStart) >= config.longWorkSeconds {
+                outputs.append(.speak(.longWorkBreak))
+                state.continuousWorkStartedAt = now
+            }
+        }
+
         // 포만감 감쇠 — 알 단계/휴식 시간엔 정지
         if state.pet.stage != .egg && !isRestTime(now: now) {
             let satietyBefore = state.pet.satiety
@@ -184,6 +210,16 @@ public final class PetEngine {
                     outputs.append(contentsOf: die(now: now))
                     return outputs
                 }
+            }
+        }
+
+        // 랜덤 잡담 — 쿨다운 후 평균 10분 내 발화 (휴가/알 제외)
+        if !state.settings.vacationMode && state.pet.stage != .egg {
+            let cooldownOver = state.lastChatterAt
+                .map { now.timeIntervalSince($0) >= config.chatterCooldownSeconds } ?? true
+            if cooldownOver && random() < delta / 600 {
+                state.lastChatterAt = now
+                outputs.append(.speak(.randomChatter))
             }
         }
         return outputs
