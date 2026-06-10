@@ -103,4 +103,36 @@ public final class PetEngine {
         state.pet.exp += amount
         return []
     }
+
+    // 1초 주기로 호출되는 시간 틱.
+    // 델타를 캡 — 잠자기/앱 정지 공백은 흐르지 않은 시간으로 취급 (스펙 §5)
+    public func tick(now: Date) -> [EngineOutput] {
+        guard let last = lastTickAt else { lastTickAt = now; return [] }
+        guard now > last else { return [] }
+        let delta = min(now.timeIntervalSince(last), config.tickDeltaCapSeconds)
+        lastTickAt = now
+        var outputs: [EngineOutput] = []
+
+        // 포만감 감쇠 — 알 단계/휴식 시간엔 정지
+        if state.pet.stage != .egg && !isRestTime(now: now) {
+            let satietyBefore = state.pet.satiety
+            state.pet.satiety = max(0, satietyBefore - config.satietyDecayPerHour * delta / 3600)
+            if !hungryWarned && state.pet.satiety <= config.hungryThreshold && state.pet.satiety > 0 {
+                hungryWarned = true
+                outputs.append(.speak(.hungryWarning))
+            }
+            if state.pet.satiety == 0 {
+                if satietyBefore > 0 { outputs.append(.speak(.criticalWarning)) }
+                state.pet.criticalAccumulatedSeconds += delta
+                // 사망 판정은 Task 7에서 추가
+            }
+        }
+        return outputs
+    }
+
+    // 주말 휴식 또는 휴가 모드 (스펙 §5 휴식 예외)
+    private func isRestTime(now: Date) -> Bool {
+        state.settings.vacationMode
+            || state.settings.restWeekdays.contains(calendar.component(.weekday, from: now))
+    }
 }
