@@ -75,7 +75,8 @@ public final class PetEngine {
         if candidates.isEmpty { candidates = pool }
         let index = min(Int(random() * Double(candidates.count)), candidates.count - 1)
         return PetState(species: candidates[index], stage: .egg, level: 0, exp: 0,
-                        satiety: 100, mood: 80, bornAt: now, criticalAccumulatedSeconds: 0)
+                        satiety: 100, mood: 80, bornAt: now, criticalAccumulatedSeconds: 0,
+                        personality: Personality.random(random))
     }
 
     // 이름 변경 — 트림 후 빈 문자열이면 기본 이름 복귀, 12자 초과는 앞 12자 (스펙 §2.2)
@@ -211,7 +212,8 @@ public final class PetEngine {
         let record = CollectionRecord(species: state.pet.species, result: .graduated,
                                       daysLived: daysLived(now: now),
                                       finalLevel: state.pet.level, endedAt: now,
-                                      customName: state.pet.customName)
+                                      customName: state.pet.customName,
+                                      personality: state.pet.personality)
         state.collection.append(record)
         state.pet = Self.newEgg(collection: state.collection, pool: hatchPool,
                                 now: now, random: random)
@@ -227,7 +229,8 @@ public final class PetEngine {
         let record = CollectionRecord(species: state.pet.species, result: .died,
                                       daysLived: daysLived(now: now),
                                       finalLevel: state.pet.level, endedAt: now,
-                                      customName: state.pet.customName)
+                                      customName: state.pet.customName,
+                                      personality: state.pet.personality)
         state.collection.append(record)
         state.pet = Self.newEgg(collection: state.collection, pool: hatchPool,
                                 now: now, random: random)
@@ -346,6 +349,11 @@ public final class PetEngine {
             outputs.append(contentsOf: tick(now: current))
         }
         return outputs
+    }
+
+    // 테스트 전용 — 성격 고정(기록 복사 검증용)
+    public func debugSetPersonality(_ personality: Personality) {
+        state.pet.personality = personality
     }
 
     // 디버그 메뉴 전용 (스펙 §11)
