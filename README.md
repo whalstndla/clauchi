@@ -82,8 +82,6 @@ Scripts/test.sh --filter PetEngineFeedingTests
 - **스프라이트 도트 데이터는 게임 로직과 분리** — 종을 추가해도 로직 변경이 없다.
 - **게임 수치는 하드코딩하지 않고** `GameConfig` 한 곳에 모은다.
 
-설계 전문과 구현 계획은 [`docs/superpowers/`](docs/superpowers/)에 있습니다.
-
 ## 📄 라이선스
 
 [MIT](LICENSE) © 2026 whalstndla
