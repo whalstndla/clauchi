@@ -141,7 +141,8 @@ final class AppModel {
         let context = DialogueContext(
             situation: situation, petName: pet.displayName,
             stage: pet.stage, level: pet.level, satiety: Int(pet.satiety),
-            mood: Int(pet.mood))
+            mood: Int(pet.mood),
+            species: pet.species, personality: pet.personality)
         let expression: ClauchiCore.Expression = switch situation {
         case .criticalWarning: .critical
         case .hungryWarning, .longWorkBreak: .sad
@@ -157,7 +158,8 @@ final class AppModel {
         let context = DialogueContext(
             situation: .promptReaction, petName: pet.displayName,
             stage: pet.stage, level: pet.level, satiety: Int(pet.satiety),
-            mood: Int(pet.mood), userPrompt: promptText)
+            mood: Int(pet.mood), userPrompt: promptText,
+            species: pet.species, personality: pet.personality)
         enqueueDialogueToast(context: context, expression: .happy,
                              species: pet.species, stage: pet.stage)
     }
@@ -167,7 +169,8 @@ final class AppModel {
         let context = DialogueContext(
             situation: situation, petName: record.customName ?? record.species.koreanName,
             stage: .adult, level: record.finalLevel,
-            satiety: situation == .died ? 0 : 100)
+            satiety: situation == .died ? 0 : 100,
+            species: record.species, personality: record.personality ?? .cheerful)
         enqueueDialogueToast(context: context, expression: expression,
                              species: record.species, stage: .adult)
     }
