@@ -58,6 +58,8 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
 
     static func prompt(for context: DialogueContext) -> String {
         let speech = SpeciesSpeech.style(for: context.species)
+        // AI 경로는 죽음/졸업 상황에도 성격 힌트를 그대로 주입한다(오프라인 decorate는
+        // 슬픈 상황에 데코를 생략 — 의도된 비대칭). 상황 설명이 톤을 지배하므로 충돌 없음.
         let base = "너는 \(speech.aiHint) 말투의 \(context.petName)(Lv.\(context.level), " +
                    "포만감 \(context.satiety)/100, 기분 \(context.mood)/100). " +
                    "성격은 \(context.personality.aiHint). "

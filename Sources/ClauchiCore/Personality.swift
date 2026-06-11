@@ -40,7 +40,7 @@ public enum Personality: String, Codable, CaseIterable, Equatable, Sendable {
     }
 
     // 오프라인 폴백에서 한 겹 적용할 데코레이터(접두 또는 접미). 없으면 nil.
-    public enum Decorator: Equatable {
+    public enum Decorator: Equatable, Sendable {
         case prefix(String)
         case suffix(String)
     }
