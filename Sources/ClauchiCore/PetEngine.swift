@@ -74,8 +74,10 @@ public final class PetEngine {
         }
         if candidates.isEmpty { candidates = pool }
         let index = min(Int(random() * Double(candidates.count)), candidates.count - 1)
+        // random 두 번째 소비 — 종 결정 후 성격 결정 (순서 변경 시 기존 테스트의 결정값이 바뀜)
         return PetState(species: candidates[index], stage: .egg, level: 0, exp: 0,
-                        satiety: 100, mood: 80, bornAt: now, criticalAccumulatedSeconds: 0,
+                        satiety: 100, mood: 80, bornAt: now,
+                        criticalAccumulatedSeconds: 0,
                         personality: Personality.random(random))
     }
 
