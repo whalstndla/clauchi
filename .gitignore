@@ -15,3 +15,6 @@ build/
 
 # 격리 작업용 git worktree
 .worktrees/
+
+# 내부 설계/계획 문서 — 공개 레포에서 제외
+docs/
