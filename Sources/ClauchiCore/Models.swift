@@ -51,6 +51,7 @@ public struct PetState: Codable, Equatable, Sendable {
     public var mood: Double             // 0...100 — 쓰다듬기/레벨업으로 상승 (스펙 §5)
     public var bornAt: Date
     public var criticalAccumulatedSeconds: TimeInterval
+    public var personality: Personality
 
     public var displayName: String {
         customName ?? species.koreanName
@@ -58,15 +59,18 @@ public struct PetState: Codable, Equatable, Sendable {
 
     public init(species: Species, stage: Stage, level: Int, exp: Int,
                 satiety: Double, mood: Double, bornAt: Date,
-                criticalAccumulatedSeconds: TimeInterval, customName: String? = nil) {
+                criticalAccumulatedSeconds: TimeInterval,
+                personality: Personality = .cheerful, customName: String? = nil) {
         self.species = species; self.stage = stage; self.customName = customName
         self.level = level; self.exp = exp
         self.satiety = satiety; self.mood = mood; self.bornAt = bornAt
         self.criticalAccumulatedSeconds = criticalAccumulatedSeconds
+        self.personality = personality
     }
 
     enum CodingKeys: String, CodingKey {
-        case species, stage, customName, level, exp, satiety, mood, bornAt, criticalAccumulatedSeconds
+        case species, stage, customName, level, exp, satiety, mood, bornAt
+        case criticalAccumulatedSeconds, personality
     }
 
     // mood 가 없는 v1 세이브 마이그레이션 — 기본 80 (스펙 §9 버전 대비)
@@ -83,6 +87,9 @@ public struct PetState: Codable, Equatable, Sendable {
         bornAt = try container.decode(Date.self, forKey: .bornAt)
         criticalAccumulatedSeconds =
             try container.decode(TimeInterval.self, forKey: .criticalAccumulatedSeconds)
+        // personality 없는 구버전 — bornAt 기반 결정적 복원 (스펙 §6.1)
+        personality = try container.decodeIfPresent(Personality.self, forKey: .personality)
+            ?? Personality.deterministic(from: bornAt)
     }
 }
 

@@ -58,3 +58,20 @@ import Testing
     let decoded = try JSONDecoder.clauchi.decode(GameState.self, from: data)
     #expect(decoded.pet.customName == "쿠키")
 }
+
+@Test func personalitySurvivesRoundtrip() throws {
+    var state = TestSupport.makeState()
+    state.pet.personality = .quirky
+    let data = try JSONEncoder.clauchi.encode(state)
+    let decoded = try JSONDecoder.clauchi.decode(GameState.self, from: data)
+    #expect(decoded.pet.personality == .quirky)
+}
+
+@Test func personalityMissingDecodesDeterministicallyFromBornAt() throws {
+    // 성격 필드 없는 구버전 PetState — bornAt 기반 결정적 복원
+    let json = #"{"species":"tiger","stage":"adult","level":15,"exp":0,"satiety":80,"bornAt":"2026-06-01T00:00:00Z","criticalAccumulatedSeconds":0}"#
+    let pet = try JSONDecoder.clauchi.decode(PetState.self, from: Data(json.utf8))
+    let expected = Personality.deterministic(
+        from: ISO8601DateFormatter().date(from: "2026-06-01T00:00:00Z")!)
+    #expect(pet.personality == expected)
+}
