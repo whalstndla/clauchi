@@ -1,5 +1,3 @@
-import Foundation
-
 // 종별 말투 데이터 — 게임 로직과 분리(스프라이트 패턴). 종 추가 = 이 테이블에 한 줄 추가.
 public struct SpeechStyle: Equatable, Sendable {
     public var aiHint: String          // AI 프롬프트 주입용 종 말투 묘사
