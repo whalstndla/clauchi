@@ -9,6 +9,7 @@ struct CollectionView: View {
         let records = model.engine.state.collection
         let currentSpecies = model.engine.state.pet.species
         let currentStage = model.engine.state.pet.stage
+        let currentPersonality = model.engine.state.pet.personality
 
         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 10) {
             ForEach(Species.allCases, id: \.rawValue) { species in
@@ -37,6 +38,14 @@ struct CollectionView: View {
                         .font(.system(size: 9, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white)
                         .lineLimit(1)
+                    if let cellPersonality = personality(
+                        for: species, isCurrent: isCurrent, current: currentPersonality,
+                        records: records), graduated || died || isCurrent {
+                        Text(cellPersonality.koreanName)
+                            .font(.system(size: 8, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.5))
+                            .lineLimit(1)
+                    }
                 }
                 .padding(.vertical, 6)
                 .frame(maxWidth: .infinity)
@@ -56,5 +65,13 @@ struct CollectionView: View {
         if isCurrent { return "🐣 \(name)" }
         if died { return "🪦 \(name)" }
         return "???"
+    }
+
+    // 칸에 표시할 성격 — 현재 펫이면 현재 성격, 아니면 그 종의 가장 최근 기록 성격
+    private func personality(for species: Species, isCurrent: Bool,
+                             current: Personality,
+                             records: [CollectionRecord]) -> Personality? {
+        if isCurrent { return current }
+        return records.last(where: { $0.species == species })?.personality
     }
 }
