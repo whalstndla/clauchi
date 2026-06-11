@@ -25,21 +25,21 @@ public enum SpriteLibrary {
     public static let requiredSmallStates: [VisualState] =
         [.idle, .working, .sleeping, .hungry, .critical, .playing]
 
-    // 종별 메인 색 (아기 틴트 + UI 포인트 컬러)
+    // 종별 메인 색 (아기 틴트 + UI 포인트 컬러) — 스타일 C 팔레트의 몸색
     public static func primaryColor(of species: Species) -> UInt32 {
         switch species {
-        case .rat:     0x9CA3AFFF
-        case .ox:      0xB45309FF
-        case .tiger:   0xF59E42FF
-        case .rabbit:  0xE5E7EBFF
-        case .dragon:  0x22C55EFF
-        case .snake:   0x84CC16FF
-        case .horse:   0xA16207FF
-        case .goat:    0xF5F5F4FF
-        case .monkey:  0x92400EFF
-        case .rooster: 0xFBBF24FF
-        case .dog:     0xD97706FF
-        case .pig:     0xFDA4AFFF
+        case .rat:     0xD9DCE3FF
+        case .ox:      0xE8C49CFF
+        case .tiger:   0xF6A85CFF
+        case .rabbit:  0xF5EDE3FF
+        case .dragon:  0x8FD9A8FF
+        case .snake:   0xBCD96CFF
+        case .horse:   0xD8A06AFF
+        case .goat:    0xF4F1EAFF
+        case .monkey:  0xC98E5FFF
+        case .rooster: 0xF5ECD7FF
+        case .dog:     0xEFC07EFF
+        case .pig:     0xF8C8CEFF
         }
     }
 
