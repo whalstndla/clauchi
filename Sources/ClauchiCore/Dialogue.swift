@@ -9,12 +9,16 @@ public struct DialogueContext: Equatable, Sendable {
     public var satiety: Int
     public var mood: Int
     public var userPrompt: String?
+    public var species: Species
+    public var personality: Personality
     public init(situation: DialogueSituation, petName: String,
                 stage: Stage, level: Int, satiety: Int, mood: Int = 50,
-                userPrompt: String? = nil) {
+                userPrompt: String? = nil,
+                species: Species = .rat, personality: Personality = .cheerful) {
         self.situation = situation; self.petName = petName
         self.stage = stage; self.level = level; self.satiety = satiety
         self.mood = mood; self.userPrompt = userPrompt
+        self.species = species; self.personality = personality
     }
 }
 

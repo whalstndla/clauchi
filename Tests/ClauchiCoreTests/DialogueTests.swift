@@ -43,3 +43,19 @@ private let situations: [DialogueSituation] = [
         situation: .promptReaction, petName: "쿠키", stage: .adult, level: 5, satiety: 80))
     #expect(!line.isEmpty)
 }
+
+@Test func dialogueContextCarriesSpeciesAndPersonality() {
+    let context = DialogueContext(situation: .greeting, petName: "멍멍이",
+                                  stage: .baby, level: 1, satiety: 100,
+                                  species: .dog, personality: .aloof)
+    #expect(context.species == .dog)
+    #expect(context.personality == .aloof)
+}
+
+@Test func dialogueContextDefaultsKeepExistingCallSitesCompiling() {
+    // 종/성격 미지정 시 기본값으로 컴파일 (기존 호출부 호환)
+    let context = DialogueContext(situation: .greeting, petName: "x",
+                                  stage: .baby, level: 1, satiety: 100)
+    #expect(context.species == .rat)
+    #expect(context.personality == .cheerful)
+}
