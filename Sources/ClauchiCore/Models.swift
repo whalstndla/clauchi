@@ -33,11 +33,12 @@ public struct CollectionRecord: Codable, Equatable, Sendable {
     public var finalLevel: Int
     public var endedAt: Date
     public var customName: String?          // 생애 종료 시 보존되는 사용자 지정 이름
+    public var personality: Personality?    // 생애 종료 시 보존되는 성격 (레거시는 nil)
     public init(species: Species, result: LifeResult, daysLived: Int, finalLevel: Int,
-                endedAt: Date, customName: String? = nil) {
+                endedAt: Date, customName: String? = nil, personality: Personality? = nil) {
         self.species = species; self.result = result
         self.daysLived = daysLived; self.finalLevel = finalLevel; self.endedAt = endedAt
-        self.customName = customName
+        self.customName = customName; self.personality = personality
     }
 }
 

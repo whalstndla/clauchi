@@ -75,3 +75,20 @@ import Testing
         from: ISO8601DateFormatter().date(from: "2026-06-01T00:00:00Z")!)
     #expect(pet.personality == expected)
 }
+
+@Test func collectionRecordPersonalitySurvivesRoundtrip() throws {
+    let now = Date(timeIntervalSince1970: 1_780_000_000)
+    let record = CollectionRecord(species: .rat, result: .graduated,
+                                  daysLived: 3, finalLevel: 30, endedAt: now,
+                                  personality: .grumpy)
+    let data = try JSONEncoder.clauchi.encode(record)
+    let decoded = try JSONDecoder.clauchi.decode(CollectionRecord.self, from: data)
+    #expect(decoded.personality == .grumpy)
+}
+
+@Test func collectionRecordPersonalityMissingDecodesAsNil() throws {
+    // 성격 필드 없는 구버전 레코드 — nil 디코드
+    let json = #"{"species":"rat","result":"graduated","daysLived":3,"finalLevel":30,"endedAt":"2026-06-01T00:00:00Z"}"#
+    let record = try JSONDecoder.clauchi.decode(CollectionRecord.self, from: Data(json.utf8))
+    #expect(record.personality == nil)
+}
