@@ -45,8 +45,12 @@ enum HookInstaller {
             .deletingLastPathComponent().appendingPathComponent("ClauchiHook")
         try FileManager.default.createDirectory(
             at: installedBinaryURL.deletingLastPathComponent(), withIntermediateDirectories: true)
-        _ = try? FileManager.default.removeItem(at: installedBinaryURL)
-        try FileManager.default.copyItem(at: sourceURL, to: installedBinaryURL)
+        // 내용이 같으면 복사 생략 — remove→copy 사이 훅 발화 시 일시 실패 창 방지
+        if !FileManager.default.contentsEqual(atPath: sourceURL.path,
+                                              andPath: installedBinaryURL.path) {
+            _ = try? FileManager.default.removeItem(at: installedBinaryURL)
+            try FileManager.default.copyItem(at: sourceURL, to: installedBinaryURL)
+        }
 
         // 2) settings.json 병합 (없으면 생성)
         var existing: [String: Any] = [:]
@@ -56,7 +60,11 @@ enum HookInstaller {
         }
         let merged = HookConfigMerger.merged(settings: existing,
                                              hookBinaryPath: installedBinaryURL.path)
-        try write(merged)
+        // 병합 결과가 기존과 같으면 쓰기 생략 — 매 실행 재기록으로 인한
+        // Claude Code와의 동시 쓰기 레이스·포맷 정규화를 피한다
+        if !(merged as NSDictionary).isEqual(to: existing) {
+            try write(merged)
+        }
     }
 
     static func uninstall() throws {
