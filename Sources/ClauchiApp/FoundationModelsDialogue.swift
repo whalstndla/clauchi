@@ -57,8 +57,10 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
         """
 
     static func prompt(for context: DialogueContext) -> String {
-        let base = "너는 \(context.petName)(Lv.\(context.level), 포만감 \(context.satiety)/100, " +
-                   "기분 \(context.mood)/100). "
+        let speech = SpeciesSpeech.style(for: context.species)
+        let base = "너는 \(speech.aiHint) 말투의 \(context.petName)(Lv.\(context.level), " +
+                   "포만감 \(context.satiety)/100, 기분 \(context.mood)/100). " +
+                   "성격은 \(context.personality.aiHint). "
         if let userPrompt = context.userPrompt {
             return base + "주인이 방금 Claude에게 시킨 작업: \"\(Self.sanitizeInput(userPrompt))\". " +
                           "이 작업에 대해 펫답게 응원/반응 한마디:"
