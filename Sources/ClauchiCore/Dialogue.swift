@@ -43,18 +43,18 @@ public struct TemplateDialogueProvider: DialogueProviding {
     }
 
     // 슬픈 상황엔 장난스러운 말끝/데코를 적용하지 않는다(원문 유지)
-    static let somberSituations: Set<DialogueSituation> = [.died, .graduated]
+    private static let somberSituations: Set<DialogueSituation> = [.died, .graduated]
 
-    // 종 감탄사 + 성격 데코(한 겹)를 입히는 순수 함수 — 테스트 대상.
+    // 종 감탄사 + 성격 데코(한 겹)를 입히는 순수 함수.
     // 순서: 성격 접두 → 종 감탄사 → 성격 접미 (자연스러운 문장 끝)
-    func decorate(_ line: String, for context: DialogueContext) -> String {
+    private func decorate(_ line: String, for context: DialogueContext) -> String {
         guard !Self.somberSituations.contains(context.situation) else { return line }
         var result = line
         let decorator = context.personality.decorator
         if case .prefix(let prefix) = decorator { result = prefix + result }
         let interjections = SpeciesSpeech.style(for: context.species).interjections
         if !interjections.isEmpty {
-            let index = min(Int(random() * Double(interjections.count)), interjections.count - 1)
+            let index = max(0, min(Int(random() * Double(interjections.count)), interjections.count - 1))
             result += " " + interjections[index]
         }
         if case .suffix(let suffix) = decorator { result += suffix }

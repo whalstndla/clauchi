@@ -99,3 +99,13 @@ private let situations: [DialogueSituation] = [
     #expect(line.hasSuffix("…"))            // 수줍음 접미가 가장 끝
     #expect(line.contains("스르륵~"))        // 뱀 감탄사가 접미 앞
 }
+
+@Test func offlineSkipsDecorationForGraduatedSituation() async {
+    let provider = TemplateDialogueProvider(random: { 0 })
+    let context = DialogueContext(situation: .graduated, petName: "멍멍이",
+                                  stage: .adult, level: 5, satiety: 100,
+                                  species: .dog, personality: .aloof)
+    let line = await provider.line(for: context)
+    #expect(!line.contains("멍!"))
+    #expect(!line.hasPrefix("흥, "))
+}
