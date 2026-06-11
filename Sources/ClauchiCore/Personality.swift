@@ -40,7 +40,10 @@ public enum Personality: String, Codable, CaseIterable, Equatable, Sendable {
     }
 
     // 오프라인 폴백에서 한 겹 적용할 데코레이터(접두 또는 접미). 없으면 nil.
-    public enum Decorator: Equatable { case prefix(String); case suffix(String) }
+    public enum Decorator: Equatable {
+        case prefix(String)
+        case suffix(String)
+    }
     public var decorator: Decorator? {
         switch self {
         case .cheerful: nil
@@ -57,7 +60,7 @@ public enum Personality: String, Codable, CaseIterable, Equatable, Sendable {
     // 부화 시 랜덤 배정 — 주입된 random으로 결정적
     public static func random(_ random: () -> Double) -> Personality {
         let all = allCases
-        let index = min(Int(random() * Double(all.count)), all.count - 1)
+        let index = max(0, min(Int(random() * Double(all.count)), all.count - 1))
         return all[index]
     }
 
