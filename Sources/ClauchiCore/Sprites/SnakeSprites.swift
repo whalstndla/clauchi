@@ -1,377 +1,381 @@
 import Foundation
 
-// 성체 뱀 도트 — 스르륵 (스펙 §8)
-// 실루엣: 둥글고 큰 머리 + 짧고 통통한 직립 몸통, 분기된 빨간 혀, 노란 배 무늬
+// 성체 뱀 도트 — 스르륵, 스타일 C: 컬러 외곽선 (스펙 §1.2, §8)
+// 검은 외곽선 대신 몸색보다 한 톤 진한 올리브 외곽선 + 파스텔 연두 몸통.
+// 큰 눈(좌상단 1px 흰 하이라이트) + 볼터치 + 머리 비중 큰 치비 비율.
+// 실루엣: 바닥에 또아리 튼 코일 2겹(가로로 낮은 형태) + 그 위로 올라온 둥근 머리,
+// 낼름 내민 갈라진 혀(P)와 등의 S 무늬 점, 코일 우측의 꼬리 팁이
+// 어떤 상태에서도 뱀임을 보장한다. idle은 깜빡임 대신 혀 넣었다 뺐다로 연출.
+// 음영 D는 광원 좌상단 가정으로 우측/하단에 일관 배치.
 enum SnakeSprites {
-    // 팔레트 키는 유니코드 이스케이프로 표기한다.
-    // 검증 스크립트가 따옴표 안 대문자 문자열을 프레임 행으로 집계하므로 충돌을 피하기 위함.
+    // 스타일 C — 컬러 외곽선 (스펙 §1.2). 키는 유니코드 이스케이프 표기 관행 유지.
     static let palette: [Character: UInt32] = [
-        "\u{4B}": 0x1C1917FF,   // K — 외곽선
-        "\u{47}": 0x84CC16FF,   // G — 연두 몸통
-        "\u{44}": 0x4D7C0FFF,   // D — 진올리브 음영
-        "\u{57}": 0xFEF08AFF,   // W — 노란 배
-        "\u{52}": 0xEF4444FF,   // R — 빨간 혀
-        "\u{45}": 0x1C1917FF,   // E — 눈
+        "\u{4B}": 0x74933BFF,   // K — 외곽선 (올리브)
+        "\u{47}": 0xBCD96CFF,   // G — 연두 몸통
+        "\u{44}": 0x9DBE4FFF,   // D — 음영
+        "\u{57}": 0xEFF7D8FF,   // W — 배 (연크림)
+        "\u{53}": 0x86A647FF,   // S — 등 무늬 점
+        "\u{50}": 0xF25F9CFF,   // P — 혀 (핑크)
+        "\u{42}": 0xF7BFCBFF,   // B — 볼터치
+        "\u{45}": 0x2E241DFF,   // E — 눈 (다크브라운)
+        "\u{48}": 0xFFFFFFFF,   // H — 눈 하이라이트
+        "\u{4D}": 0x8A6B57FF,   // M — 입 (웜브라운)
     ]
 
     private static func grid(_ rows: [String]) -> PixelGrid {
         PixelGrid(rows: rows, palette: palette)!
     }
 
-    // MARK: - 16x16 소형 프레임
-
-    // 기본 포즈 — 혀 내밀기 (프레임 1)
-    // 머리: 행1~5, 목: 행6, 몸통: 행7~13, 꼬리: 행14~15
+    // 기본 포즈 — 또아리 코일 2겹 위 둥근 머리 + 갈라진 혀 낼름(P) + 볼터치 + 등 무늬 S
     static let idle1Rows = [
-        "................",  // 행 00
-        "....KKKKKK......",  // 행 01
-        "...KGGGGGGK.....",  // 행 02
-        "...KGEGGEGK.....",  // 행 03 — 눈 2개
-        "...KGGWWGGK.....",  // 행 04 — 배 무늬
-        "....KKWWKK......",  // 행 05 — 목 + 혀 준비
-        "....KGGGGK......",  // 행 06 — 목
-        "...KGGGGGGK.....",  // 행 07 — 몸통 시작
-        "...KGWWWWGK.....",  // 행 08 — 배
-        "...KGWWWWGK.....",  // 행 09
-        "...KGGWWGGK.....",  // 행 10
-        "....KGGGGK......",  // 행 11
-        "....KDGGGK......",  // 행 12 — 음영
-        ".....KGGK.......",  // 행 13
-        ".....KRRK.......",  // 행 14 — 혀 (분기)
-        ".....K..K.......",  // 행 15 — 혀 끝 갈라짐
+        "................",
+        "....KKKKKK......",
+        "...KGGGGGGK.....",
+        "..KGGGGGGGDK....",
+        "..KGHEGGHEDK....",
+        "..KGEEGGEEDK....",
+        "..KBGGGPGBDK....",
+        "...KKKKPKKK.....",
+        "...KKKPKPKKKK...",
+        "..KGSGGSGGSGDK..",
+        "..KWWWWWWWWWDKKK",
+        ".KKKKKKKKKKKKKGK",
+        ".KGSGGSGGSGGSDKK",
+        ".KWWWWWWWWWWWDK.",
+        "..KKKKKKKKKKKK..",
+        "................",
     ]
 
-    // 깜빡임 — 눈 감음 (프레임 2)
+    // 혀 수납 — 깜빡임 대신 혀를 넣고 작은 입 M으로 표정 유지
     static let idle2Rows = [
-        "................",  // 행 00
-        "....KKKKKK......",  // 행 01
-        "...KGGGGGGK.....",  // 행 02
-        "...KGGGGGGK.....",  // 행 03 — 눈 감음
-        "...KGGWWGGK.....",  // 행 04
-        "....KKWWKK......",  // 행 05
-        "....KGGGGK......",  // 행 06
-        "...KGGGGGGK.....",  // 행 07
-        "...KGWWWWGK.....",  // 행 08
-        "...KGWWWWGK.....",  // 행 09
-        "...KGGWWGGK.....",  // 행 10
-        "....KGGGGK......",  // 행 11
-        "....KDGGGK......",  // 행 12
-        ".....KGGK.......",  // 행 13
-        ".....KRRK.......",  // 행 14
-        ".....K..K.......",  // 행 15
+        "................",
+        "....KKKKKK......",
+        "...KGGGGGGK.....",
+        "..KGGGGGGGDK....",
+        "..KGHEGGHEDK....",
+        "..KGEEGGEEDK....",
+        "..KBGGGMGBDK....",
+        "...KKKKKKKK.....",
+        "...KKKKKKKKKK...",
+        "..KGSGGSGGSGDK..",
+        "..KWWWWWWWWWDKKK",
+        ".KKKKKKKKKKKKKGK",
+        ".KGSGGSGGSGGSDKK",
+        ".KWWWWWWWWWWWDK.",
+        "..KKKKKKKKKKKK..",
+        "................",
     ]
 
-    // 일하는 중 — 1px 위로 폴짝 + 혀 빠름 (프레임 1)
+    // 일하는 중 — 폴짝 1px 점프(전체 1행 위로) + 혀 낼름 + 땀방울 H
     static let working1Rows = [
-        "....KKKKKK......",  // 행 00 — 1px 위로 점프
-        "...KGGGGGGK.....",  // 행 01
-        "...KGEGGEGK.....",  // 행 02
-        "...KGGWWGGK.....",  // 행 03
-        "....KKWWKK......",  // 행 04
-        "....KGGGGK......",  // 행 05
-        "...KGGGGGGK.....",  // 행 06
-        "...KGWWWWGK.....",  // 행 07
-        "...KGWWWWGK.....",  // 행 08
-        "...KGGWWGGK.....",  // 행 09
-        "....KGGGGK......",  // 행 10
-        "....KDGGGK......",  // 행 11
-        ".....KGGK.......",  // 행 12
-        ".....KRRK.......",  // 행 13 — 혀 내밀기
-        "....KR..RK......",  // 행 14 — 분기된 혀 끝
-        "................",  // 행 15
+        "....KKKKKK....H.",
+        "...KGGGGGGK.....",
+        "..KGGGGGGGDK....",
+        "..KGHEGGHEDK....",
+        "..KGEEGGEEDK....",
+        "..KBGGGPGBDK....",
+        "...KKKKPKKK.....",
+        "...KKKPKPKKKK...",
+        "..KGSGGSGGSGDK..",
+        "..KWWWWWWWWWDKKK",
+        ".KKKKKKKKKKKKKGK",
+        ".KGSGGSGGSGGSDKK",
+        ".KWWWWWWWWWWWDK.",
+        "..KKKKKKKKKKKK..",
+        "................",
+        "................",
     ]
 
-    // 일하는 중 — 착지 + 혀 수납 (프레임 2)
+    // 일하는 중 — 착지 + 혀 수납 + 땀방울 위치 이동
     static let working2Rows = [
-        "................",  // 행 00
-        "....KKKKKK......",  // 행 01
-        "...KGGGGGGK.....",  // 행 02
-        "...KGEGGEGK.....",  // 행 03
-        "...KGGWWGGK.....",  // 행 04
-        "....KKWWKK......",  // 행 05
-        "....KGGGGK......",  // 행 06
-        "...KGGGGGGK.....",  // 행 07
-        "...KGWWWWGK.....",  // 행 08
-        "...KGWWWWGK.....",  // 행 09
-        "...KGGWWGGK.....",  // 행 10
-        "....KGGGGK......",  // 행 11
-        "....KDGGGK......",  // 행 12
-        ".....KGGK.......",  // 행 13
-        "....KRRRK.......",  // 행 14 — 혀 짧게
-        "................",  // 행 15
+        "................",
+        "....KKKKKK......",
+        "...KGGGGGGK...H.",
+        "..KGGGGGGGDK....",
+        "..KGHEGGHEDK....",
+        "..KGEEGGEEDK....",
+        "..KBGGGMGBDK....",
+        "...KKKKKKKK.....",
+        "...KKKKKKKKKK...",
+        "..KGSGGSGGSGDK..",
+        "..KWWWWWWWWWDKKK",
+        ".KKKKKKKKKKKKKGK",
+        ".KGSGGSGGSGGSDKK",
+        ".KWWWWWWWWWWWDK.",
+        "..KKKKKKKKKKKK..",
+        "................",
     ]
 
-    // 잠 — 눈 감고 오른쪽 위에 zzz 표시 (W 픽셀) (프레임 1)
+    // 잠 — 눈 감음(가로 E 라인) + 혀 수납 + 우상단 z 표시(W)
     static let sleeping1Rows = [
-        "..............W.",  // 행 00 — zzz 위
-        "....KKKKKK......",  // 행 01
-        "...KGGGGGGK.....",  // 행 02
-        "...KGGGGGGK.....",  // 행 03 — 눈 감음
-        "...KGGWWGGK.....",  // 행 04
-        "....KKWWKK......",  // 행 05
-        "....KGGGGK......",  // 행 06
-        "...KGGGGGGK.....",  // 행 07
-        "...KGWWWWGK.....",  // 행 08
-        "...KGWWWWGK.....",  // 행 09
-        "...KGGWWGGK.....",  // 행 10
-        "....KGGGGK......",  // 행 11
-        "....KDGGGK......",  // 행 12
-        ".....KGGK.......",  // 행 13
-        ".....KGGK.......",  // 행 14 — 혀 수납
-        "................",  // 행 15
+        ".............W..",
+        "....KKKKKK......",
+        "...KGGGGGGK.....",
+        "..KGGGGGGGDK....",
+        "..KGGGGGGGDK....",
+        "..KGEEGGEEDK....",
+        "..KBGGGGGBDK....",
+        "...KKKKKKKK.....",
+        "...KKKKKKKKKK...",
+        "..KGSGGSGGSGDK..",
+        "..KWWWWWWWWWDKKK",
+        ".KKKKKKKKKKKKKGK",
+        ".KGSGGSGGSGGSDKK",
+        ".KWWWWWWWWWWWDK.",
+        "..KKKKKKKKKKKK..",
+        "................",
     ]
 
-    // 잠 — zzz 위로 떠오름 (프레임 2)
+    // 잠 — 숨쉬기로 몸이 1px 가라앉고 z 표시가 위로 떠오름
     static let sleeping2Rows = [
-        "............W...",  // 행 00 — zzz 위치 이동
-        "....KKKKKK......",  // 행 01
-        "...KGGGGGGK.....",  // 행 02
-        "...KGGGGGGK.....",  // 행 03
-        "...KGGWWGGK.....",  // 행 04
-        "....KKWWKK......",  // 행 05
-        "....KGGGGK......",  // 행 06
-        "...KGGGGGGK.....",  // 행 07
-        "...KGWWWWGK.....",  // 행 08
-        "...KGWWWWGK.....",  // 행 09
-        "...KGGWWGGK.....",  // 행 10
-        "....KGGGGK......",  // 행 11
-        "....KDGGGK......",  // 행 12
-        ".....KGGK.......",  // 행 13
-        ".....KGGK.......",  // 행 14
-        "................",  // 행 15
+        "..............W.",
+        "................",
+        "....KKKKKK......",
+        "...KGGGGGGK.....",
+        "..KGGGGGGGDK....",
+        "..KGGGGGGGDK....",
+        "..KGEEGGEEDK....",
+        "..KBGGGGGBDK....",
+        "...KKKKKKKK.....",
+        "...KKKKKKKKKK...",
+        "..KGSGGSGGSGDK..",
+        "..KWWWWWWWWWDKKK",
+        ".KKKKKKKKKKKKKGK",
+        ".KGSGGSGGSGGSDKK",
+        ".KWWWWWWWWWWWDK.",
+        "..KKKKKKKKKKKK..",
     ]
 
-    // 배고픔 — 혀를 길게 내밀고 눈물 (프레임 1)
+    // 배고픔 — 벌린 입 (M 2px)
     static let hungry1Rows = [
-        "................",  // 행 00
-        "....KKKKKK......",  // 행 01
-        "...KGGGGGGK.....",  // 행 02
-        "...KGEGGEGK.....",  // 행 03
-        "...KGGWWGGK.....",  // 행 04
-        "....KKWWKK......",  // 행 05
-        "....KGGGGK......",  // 행 06
-        "...KGGGGGGK.....",  // 행 07
-        "...KGWWWWGK.....",  // 행 08
-        "...KGWWWWGK.....",  // 행 09
-        "...KGGWWGGK.....",  // 행 10
-        "....KGGGGK......",  // 행 11
-        "....KDGGGK......",  // 행 12
-        ".....KGGK.......",  // 행 13
-        ".....KRRK.......",  // 행 14 — 혀 내밀기
-        "....KR..RK......",  // 행 15 — 혀 끝 갈라짐
+        "................",
+        "....KKKKKK......",
+        "...KGGGGGGK.....",
+        "..KGGGGGGGDK....",
+        "..KGHEGGHEDK....",
+        "..KGEEGGEEDK....",
+        "..KBGGMMGBDK....",
+        "...KKKKKKKK.....",
+        "...KKKKKKKKKK...",
+        "..KGSGGSGGSGDK..",
+        "..KWWWWWWWWWDKKK",
+        ".KKKKKKKKKKKKKGK",
+        ".KGSGGSGGSGGSDKK",
+        ".KWWWWWWWWWWWDK.",
+        "..KKKKKKKKKKKK..",
+        "................",
     ]
 
-    // 배고픔 — 눈물 흘리기 (프레임 2)
+    // 배고픔 — 눈을 가늘게 뜨고(윗줄 감춤) 눈물 1px(H)
     static let hungry2Rows = [
-        "................",  // 행 00
-        "....KKKKKK......",  // 행 01
-        "...KGGGGGGK.....",  // 행 02
-        "...KGEGGEGK.....",  // 행 03
-        "...KGGWWGGK.W...",  // 행 04 — 눈물
-        "....KKWWKK......",  // 행 05
-        "....KGGGGK......",  // 행 06
-        "...KGGGGGGK.....",  // 행 07
-        "...KGWWWWGK.....",  // 행 08
-        "...KGWWWWGK.....",  // 행 09
-        "...KGGWWGGK.....",  // 행 10
-        "....KGGGGK......",  // 행 11
-        "....KDGGGK......",  // 행 12
-        ".....KGGK.......",  // 행 13
-        ".....KRRK.......",  // 행 14
-        "....KR..RK......",  // 행 15
+        "................",
+        "....KKKKKK......",
+        "...KGGGGGGK.....",
+        "..KGGGGGGGDK....",
+        "..KGGGGGGGDK....",
+        "..KGEEGGEEDKH...",
+        "..KBGGMMGBDK....",
+        "...KKKKKKKK.....",
+        "...KKKKKKKKKK...",
+        "..KGSGGSGGSGDK..",
+        "..KWWWWWWWWWDKKK",
+        ".KKKKKKKKKKKKKGK",
+        ".KGSGGSGGSGGSDKK",
+        ".KWWWWWWWWWWWDK.",
+        "..KKKKKKKKKKKK..",
+        "................",
     ]
 
-    // 위독 — 창백 (몸통 G ↔ 배 W 반전) (프레임 1)
+    // 위독 — 창백 반전(G↔W) + 감은 눈(흐릿한 EE, H 없음) + 볼터치 제거 + 혀 수납
     static let critical1Rows = [
-        "................",  // 행 00
-        "....KKKKKK......",  // 행 01
-        "...KWWWWWWK.....",  // 행 02 — 창백한 몸
-        "...KWEWWEWK.....",  // 행 03 — X눈
-        "...KWWGGWWK.....",  // 행 04 — 반전된 배
-        "....KKGGKK......",  // 행 05
-        "....KWWWWK......",  // 행 06
-        "...KWWWWWWK.....",  // 행 07
-        "...KWGGGGWK.....",  // 행 08 — 반전
-        "...KWGGGGWK.....",  // 행 09
-        "...KWWGGWWK.....",  // 행 10
-        "....KWWWWK......",  // 행 11
-        "....KGWWWK......",  // 행 12 — 음영 반전
-        ".....KWWK.......",  // 행 13
-        ".....KRRK.......",  // 행 14 — 혀는 유지
-        "....KR..RK......",  // 행 15
+        "................",
+        "....KKKKKK......",
+        "...KWWWWWWK.....",
+        "..KWWWWWWWDK....",
+        "..KWEEWWEEDK....",
+        "..KWEEWWEEDK....",
+        "..KWWWWWWWDK....",
+        "...KKKKKKKK.....",
+        "...KKKKKKKKKK...",
+        "..KWSWWSWWSWDK..",
+        "..KGGGGGGGGGDKKK",
+        ".KKKKKKKKKKKKKWK",
+        ".KWSWWSWWSWWSDKK",
+        ".KGGGGGGGGGGGDK.",
+        "..KKKKKKKKKKKK..",
+        "................",
     ]
 
-    // 위독 — 창백 + 주저앉음 1px (프레임 2)
+    // 위독 — 1px 주저앉음
     static let critical2Rows = [
-        "................",  // 행 00
-        "................",  // 행 01 — 1px 아래로
-        "....KKKKKK......",  // 행 02
-        "...KWWWWWWK.....",  // 행 03
-        "...KWEWWEWK.....",  // 행 04
-        "...KWWGGWWK.....",  // 행 05
-        "....KKGGKK......",  // 행 06
-        "....KWWWWK......",  // 행 07
-        "...KWWWWWWK.....",  // 행 08
-        "...KWGGGGWK.....",  // 행 09
-        "...KWGGGGWK.....",  // 행 10
-        "...KWWGGWWK.....",  // 행 11
-        "....KWWWWK......",  // 행 12
-        "....KGWWWK......",  // 행 13
-        ".....KWWK.......",  // 행 14
-        ".....KRRK.......",  // 행 15
+        "................",
+        "................",
+        "....KKKKKK......",
+        "...KWWWWWWK.....",
+        "..KWWWWWWWDK....",
+        "..KWEEWWEEDK....",
+        "..KWEEWWEEDK....",
+        "..KWWWWWWWDK....",
+        "...KKKKKKKK.....",
+        "...KKKKKKKKKK...",
+        "..KWSWWSWWSWDK..",
+        "..KGGGGGGGGGDKKK",
+        ".KKKKKKKKKKKKKWK",
+        ".KWSWWSWWSWWSDKK",
+        ".KGGGGGGGGGGGDK.",
+        "..KKKKKKKKKKKK..",
     ]
 
-    // 휴일 놀기 — 꼬리 흔들기 1 (프레임 1)
+    // 휴일 놀기 — 코일 발치의 공 (P 2×2) + 혀 낼름
     static let playing1Rows = [
-        "................",  // 행 00
-        "....KKKKKK......",  // 행 01
-        "...KGGGGGGK.....",  // 행 02
-        "...KGEGGEGK.....",  // 행 03
-        "...KGGWWGGK.....",  // 행 04
-        "....KKWWKK......",  // 행 05
-        "....KGGGGK......",  // 행 06
-        "...KGGGGGGK.....",  // 행 07
-        "...KGWWWWGK.....",  // 행 08
-        "...KGWWWWGK.....",  // 행 09
-        "...KGGWWGGK.....",  // 행 10
-        "....KGGGGK......",  // 행 11
-        "....KDGGGK.GK...",  // 행 12 — 옆에 작은 공
-        ".....KGGK.GGK...",  // 행 13
-        ".....KRRK..KK...",  // 행 14
-        "....KR..RK......",  // 행 15
+        "................",
+        "....KKKKKK......",
+        "...KGGGGGGK.....",
+        "..KGGGGGGGDK....",
+        "..KGHEGGHEDK....",
+        "..KGEEGGEEDK....",
+        "..KBGGGPGBDK....",
+        "...KKKKPKKK.....",
+        "...KKKPKPKKKK...",
+        "..KGSGGSGGSGDK..",
+        "..KWWWWWWWWWDKKK",
+        ".KKKKKKKKKKKKKGK",
+        ".KGSGGSGGSGGSDKK",
+        ".KWWWWWWWWWWWDK.",
+        "..KKKKKKKKKKKKPP",
+        "..............PP",
     ]
 
-    // 휴일 놀기 — 공이 위로 튐 (프레임 2)
+    // 휴일 놀기 — 공이 위로 튀어오름
     static let playing2Rows = [
-        "................",  // 행 00
-        "....KKKKKK..GK..",  // 행 01 — 공이 위로
-        "...KGGGGGGK.GGK.",  // 행 02
-        "...KGEGGEGK..KK.",  // 행 03
-        "...KGGWWGGK.....",  // 행 04
-        "....KKWWKK......",  // 행 05
-        "....KGGGGK......",  // 행 06
-        "...KGGGGGGK.....",  // 행 07
-        "...KGWWWWGK.....",  // 행 08
-        "...KGWWWWGK.....",  // 행 09
-        "...KGGWWGGK.....",  // 행 10
-        "....KGGGGK......",  // 행 11
-        "....KDGGGK......",  // 행 12
-        ".....KGGK.......",  // 행 13
-        ".....KRRK.......",  // 행 14
-        "....KR..RK......",  // 행 15
+        "................",
+        "....KKKKKK......",
+        "...KGGGGGGK.....",
+        "..KGGGGGGGDK....",
+        "..KGHEGGHEDK....",
+        "..KGEEGGEEDK....",
+        "..KBGGGPGBDK....",
+        "...KKKKPKKK.....",
+        "...KKKPKPKKKK.PP",
+        "..KGSGGSGGSGDKPP",
+        "..KWWWWWWWWWDKKK",
+        ".KKKKKKKKKKKKKGK",
+        ".KGSGGSGGSGGSDKK",
+        ".KWWWWWWWWWWWDK.",
+        "..KKKKKKKKKKKK..",
+        "................",
     ]
 
-    // MARK: - 32x32 대형 초상화 (수작업 — 음영 D, 표정 차등)
-
-    // 행복 — 뜬 눈, 내밀린 혀, 몸 오른쪽 D 음영
+    // 32x32 초상 — 행복: 큰 둥근 머리 + 웃는 입 아래로 혀 블렙(P, 턱 아래에서 갈라짐)
+    // + 코일 2겹(등 무늬 S 점 + 배 W) + 우측 꼬리 팁
     static let largeHappyRows = [
-        "................................",  // 행 00
-        "................................",  // 행 01
-        ".........KKKKKKKKKK.............",  // 행 02
-        "........KGGGGGGGGGGK............",  // 행 03
-        ".......KGGGGGGGGGGGGK...........",  // 행 04
-        ".......KGGEGGGGGGEGGGK..........",  // 행 05 — 눈
-        ".......KGGGGGGGGGGGGK...........",  // 행 06
-        ".......KGGWWWWWWWWGGK...........",  // 행 07 — 배/주둥이 영역
-        ".......KGGWWWWWWWWGGK...........",  // 행 08
-        "........KKGGWWWWGGKK............",  // 행 09
-        "..........KGGGGGGK..............",  // 행 10 — 목
-        "..........KGGGGGGK..............",  // 행 11
-        ".........KGGGGGGGGK.............",  // 행 12
-        "........KGGGGGGGGGGK............",  // 행 13 — 몸통
-        "......KGGGGGGGGGGGGGDK..........",  // 행 14
-        "......KGGWWWWWWWWWWGDDK.........",  // 행 15 — 배
-        "......KGGWWWWWWWWWWGDDK.........",  // 행 16
-        "......KGGWWWWWWWWWWGDDK.........",  // 행 17
-        "......KGGWWWWWWWWWWGDDK.........",  // 행 18
-        "......KGGWWWWWWWWWWGDDK.........",  // 행 19
-        ".......KGGGGGGGGGGGDDK..........",  // 행 20
-        ".......KGGGGGGGGGGGDDK..........",  // 행 21
-        "........KGGGGGGGGGDDK...........",  // 행 22
-        ".........KGGGGGGGGDK............",  // 행 23
-        "..........KGGGGGDDK.............",  // 행 24
-        "...........KKKKKK...............",  // 행 25
-        ".........KRRR..RRRK.............",  // 행 26 — 분기된 혀
-        "........KR.....RR.RK............",  // 행 27 — 혀 끝 갈라짐
-        "................................",  // 행 28
-        "................................",  // 행 29
-        "................................",  // 행 30
-        "................................",  // 행 31
+        "................................",
+        "................................",
+        "..........KKKKKKKKKKKK..........",
+        "........KKGGGGGGGGGGGGKK........",
+        ".......KGGGGGGGGGGGGGGGGK.......",
+        "......KGGGGGGGGGGGGGGGGGGK......",
+        ".....KGGGGGGGGGGGGGGGGGGGGK.....",
+        "....KGGGGGGGGGGGGGGGGGGGGGDK....",
+        "....KGGGGGGGGGGGGGGGGGGGGGDK....",
+        "...KGGGGGGGGGGGGGGGGGGGGGGGDK...",
+        "...KGGGGGGGGGGGGGGGGGGGGGGGDK...",
+        "...KGGGGHEEGGGGGGGGGGHEEGGGDK...",
+        "...KGGGGEEEGGGGGGGGGGEEEGGGDK...",
+        "...KGGGGEEEGGGGGGGGGGEEEGGGDK...",
+        "...KGBBGGGGGGGGGGGGGGGGGGBBDK...",
+        "...KGBBGGGGGGGMGGMGGGGGGGBBDK...",
+        "...KGGGGGGGGGGGMMGGGGGGGGGGDK...",
+        "...KGGGGGGGGGGGPPGGGGGGGGGGDK...",
+        "....KGGGGGGGGGGPPGGGGGGGGGDK....",
+        ".....KKKKKKKKKKPPKKKKKKKKKK.....",
+        "....KKKKKKKKKKPKKPKKKKKKKKKK....",
+        "...KGSSGGGSSGGGSSGGGSSGGGDDKKK..",
+        "...KGGGGGGGGGGGGGGGGGGGGGDDKKGK.",
+        "...KWWWWWWWWWWWWWWWWWWWWWDDKKGK.",
+        ".KKKKKKKKKKKKKKKKKKKKKKKKKKKKKK.",
+        ".KGSSGGGSSGGGSSGGGSSGGGSSGDDK...",
+        ".KGGGGGGGGGGGGGGGGGGGGGGGGDDK...",
+        ".KWWWWWWWWWWWWWWWWWWWWWWWWDDK...",
+        ".KWWWWWWWWWWWWWWWWWWWWWWWWDDK...",
+        "..KWWWWWWWWWWWWWWWWWWWWWWDDK....",
+        "...KKKKKKKKKKKKKKKKKKKKKKKKK....",
+        "................................",
     ]
 
-    // 슬픔 — 아래로 처진 눈, 눈물, 아래로 굽은 혀
+    // 32x32 초상 — 슬픔: 안쪽으로 올라간 눈썹(M) + 왼눈 아래 눈물 1px(H)
+    // + 입 ∩ 곡선 + 혀 수납 + 볼터치 유지
     static let largeSadRows = [
-        "................................",  // 행 00
-        "................................",  // 행 01
-        ".........KKKKKKKKKK.............",  // 행 02
-        "........KGGGGGGGGGGK............",  // 행 03
-        ".......KGGGGGGGGGGGGK...........",  // 행 04
-        ".......KGGGGEGGGEGGGGK..........",  // 행 05 — 처진 눈
-        ".......KGGEEEGGGEEEGGK..........",  // 행 06 — 눈 아래 선
-        ".......KGGGGGGGGGGGGK...........",  // 행 07
-        ".......KGGWWWWWWWWGGK.W.........",  // 행 08 — 눈물
-        "........KKGGWWWWGGKK.W..........",  // 행 09 — 눈물 흐름
-        "..........KGGGGGGK..............",  // 행 10
-        "..........KGGGGGGK..............",  // 행 11
-        ".........KGGGGGGGGK.............",  // 행 12
-        "........KGGGGGGGGGGK............",  // 행 13
-        "......KGGGGGGGGGGGGGDK..........",  // 행 14
-        "......KGGWWWWWWWWWWGDDK.........",  // 행 15
-        "......KGGWWWWWWWWWWGDDK.........",  // 행 16
-        "......KGGWWWWWWWWWWGDDK.........",  // 행 17
-        "......KGGWWWWWWWWWWGDDK.........",  // 행 18
-        "......KGGWWWWWWWWWWGDDK.........",  // 행 19
-        ".......KGGGGGGGGGGGDDK..........",  // 행 20
-        ".......KGGGGGGGGGGGDDK..........",  // 행 21
-        "........KGGGGGGGGGDDK...........",  // 행 22
-        ".........KGGGGGGGGDK............",  // 행 23
-        "..........KGGGGGDDK.............",  // 행 24
-        "...........KKKKKK...............",  // 행 25
-        "..........KRRRRRK...............",  // 행 26 — 혀 짧게 (슬픔)
-        "................................",  // 행 27
-        "................................",  // 행 28
-        "................................",  // 행 29
-        "................................",  // 행 30
-        "................................",  // 행 31
+        "................................",
+        "................................",
+        "..........KKKKKKKKKKKK..........",
+        "........KKGGGGGGGGGGGGKK........",
+        ".......KGGGGGGGGGGGGGGGGK.......",
+        "......KGGGGGGGGGGGGGGGGGGK......",
+        ".....KGGGGGGGGGGGGGGGGGGGGK.....",
+        "....KGGGGGGGGGGGGGGGGGGGGGDK....",
+        "....KGGGGGGGGGGGGGGGGGGGGGDK....",
+        "...KGGGGGGGMMGGGGGGGMMGGGGGDK...",
+        "...KGGGGGMMGGGGGGGGGGGGMMGGDK...",
+        "...KGGGGHEEGGGGGGGGGGHEEGGGDK...",
+        "...KGGGGEEEGGGGGGGGGGEEEGGGDK...",
+        "...KGGGGEEEGGGGGGGGGGEEEGGGDK...",
+        "...KGBBGGHGGGGGGGGGGGGGGGBBDK...",
+        "...KGBBGGGGGGGGMMGGGGGGGGBBDK...",
+        "...KGGGGGGGGGGMGGMGGGGGGGGGDK...",
+        "...KGGGGGGGGGGGGGGGGGGGGGGGDK...",
+        "....KGGGGGGGGGGGGGGGGGGGGGDK....",
+        ".....KKKKKKKKKKKKKKKKKKKKKK.....",
+        "....KKKKKKKKKKKKKKKKKKKKKKKK....",
+        "...KGSSGGGSSGGGSSGGGSSGGGDDKKK..",
+        "...KGGGGGGGGGGGGGGGGGGGGGDDKKGK.",
+        "...KWWWWWWWWWWWWWWWWWWWWWDDKKGK.",
+        ".KKKKKKKKKKKKKKKKKKKKKKKKKKKKKK.",
+        ".KGSSGGGSSGGGSSGGGSSGGGSSGDDK...",
+        ".KGGGGGGGGGGGGGGGGGGGGGGGGDDK...",
+        ".KWWWWWWWWWWWWWWWWWWWWWWWWDDK...",
+        ".KWWWWWWWWWWWWWWWWWWWWWWWWDDK...",
+        "..KWWWWWWWWWWWWWWWWWWWWWWDDK....",
+        "...KKKKKKKKKKKKKKKKKKKKKKKKK....",
+        "................................",
     ]
 
-    // 위독 — 창백한 몸 (W), X 자 눈, 일자로 다문 입, 음영은 G 로 연하게
+    // 32x32 초상 — 위독: 몸 G↔W 반전(창백) + X자 눈(E 3×3) + 볼터치 제거
+    // + 머리 2px 주저앉음(상단 2행 추가로 비우고 머리 높이 축소) + 혀 수납
     static let largeCriticalRows = [
-        "................................",  // 행 00
-        "................................",  // 행 01
-        ".........KKKKKKKKKK.............",  // 행 02
-        "........KWWWWWWWWWWK............",  // 행 03 — 창백한 몸
-        ".......KWWWWWWWWWWWWK...........",  // 행 04
-        ".......KWWEWEWWWEWEWK...........",  // 행 05 — X 눈 (E=눈 색=어두운)
-        ".......KWWWEWWWWWEWWK...........",  // 행 06
-        ".......KWWWWWWWWWWWWK...........",  // 행 07
-        ".......KWWGGGGGGGGWWK...........",  // 행 08 — 반전된 배 (G가 배)
-        "........KKWWGGGGWWKK............",  // 행 09
-        "..........KWWWWWWK..............",  // 행 10
-        "..........KWWWWWWK..............",  // 행 11
-        ".........KWWWWWWWWK.............",  // 행 12
-        "........KWWWWWWWWWWK............",  // 행 13
-        "......KWWWWWWWWWWWWWGK..........",  // 행 14 — 음영 G (연하게)
-        "......KWWGGGGGGGGGGWGGK.........",  // 행 15 — 반전 배
-        "......KWWGGGGGGGGGGWGGK.........",  // 행 16
-        "......KWWGGGGGGGGGGWGGK.........",  // 행 17
-        "......KWWGGGGGGGGGGWGGK.........",  // 행 18
-        "......KWWGGGGGGGGGGWGGK.........",  // 행 19
-        ".......KWWWWWWWWWWWGGK..........",  // 행 20
-        ".......KWWWWWWWWWWWGGK..........",  // 행 21
-        "........KWWWWWWWWWGGK...........",  // 행 22
-        ".........KWWWWWWWWGK............",  // 행 23
-        "..........KWWWWWGGK.............",  // 행 24
-        "...........KKKKKK...............",  // 행 25
-        "..........KRRRRRK...............",  // 행 26 — 혀 (창백해도 혀는 빨강 유지)
-        "................................",  // 행 27
-        "................................",  // 행 28
-        "................................",  // 행 29
-        "................................",  // 행 30
-        "................................",  // 행 31
+        "................................",
+        "................................",
+        "................................",
+        "................................",
+        "..........KKKKKKKKKKKK..........",
+        "........KKWWWWWWWWWWWWKK........",
+        ".......KWWWWWWWWWWWWWWWWK.......",
+        "......KWWWWWWWWWWWWWWWWWWK......",
+        ".....KWWWWWWWWWWWWWWWWWWWWK.....",
+        "....KWWWWWWWWWWWWWWWWWWWWWDK....",
+        "...KWWWWWWWWWWWWWWWWWWWWWWWDK...",
+        "...KWWWWEWEWWWWWWWWWWEWEWWWDK...",
+        "...KWWWWWEWWWWWWWWWWWWEWWWWDK...",
+        "...KWWWWEWEWWWWWWWWWWEWEWWWDK...",
+        "...KWWWWWWWWWWWWWWWWWWWWWWWDK...",
+        "...KWWWWWWWWWWWMMWWWWWWWWWWDK...",
+        "...KWWWWWWWWWWMWWMWWWWWWWWWDK...",
+        "...KWWWWWWWWWWWWWWWWWWWWWWWDK...",
+        "....KWWWWWWWWWWWWWWWWWWWWWDK....",
+        ".....KKKKKKKKKKKKKKKKKKKKKK.....",
+        "....KKKKKKKKKKKKKKKKKKKKKKKK....",
+        "...KWSSWWWSSWWWSSWWWSSWWWDDKKK..",
+        "...KWWWWWWWWWWWWWWWWWWWWWDDKKWK.",
+        "...KGGGGGGGGGGGGGGGGGGGGGDDKKWK.",
+        ".KKKKKKKKKKKKKKKKKKKKKKKKKKKKKK.",
+        ".KWSSWWWSSWWWSSWWWSSWWWSSWDDK...",
+        ".KWWWWWWWWWWWWWWWWWWWWWWWWDDK...",
+        ".KGGGGGGGGGGGGGGGGGGGGGGGGDDK...",
+        ".KGGGGGGGGGGGGGGGGGGGGGGGGDDK...",
+        "..KGGGGGGGGGGGGGGGGGGGGGGDDK....",
+        "...KKKKKKKKKKKKKKKKKKKKKKKKK....",
+        "................................",
     ]
-
-    // MARK: - 스프라이트 세트
 
     static let set = SpriteSet(
         small: [
