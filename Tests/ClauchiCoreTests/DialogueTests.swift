@@ -59,3 +59,43 @@ private let situations: [DialogueSituation] = [
     #expect(context.species == .rat)
     #expect(context.personality == .cheerful)
 }
+
+@Test func offlineAppendsSpeciesInterjectionForNormalSituation() async {
+    // random 0 → 풀 첫 대사 + interjection 첫 항목("멍!")
+    let provider = TemplateDialogueProvider(random: { 0 })
+    let context = DialogueContext(situation: .greeting, petName: "멍멍이",
+                                  stage: .baby, level: 1, satiety: 100,
+                                  species: .dog, personality: .cheerful)
+    let line = await provider.line(for: context)
+    #expect(line.hasSuffix("멍!"))
+}
+
+@Test func offlineSkipsDecorationForSomberSituations() async {
+    let provider = TemplateDialogueProvider(random: { 0 })
+    let context = DialogueContext(situation: .died, petName: "멍멍이",
+                                  stage: .adult, level: 5, satiety: 0,
+                                  species: .dog, personality: .aloof)
+    let line = await provider.line(for: context)
+    #expect(!line.contains("멍!"))   // 종 감탄사 미적용
+    #expect(!line.hasPrefix("흥, ")) // 성격 데코 미적용
+}
+
+@Test func offlineAppliesPersonalityPrefixAndSpeciesInterjection() async {
+    let provider = TemplateDialogueProvider(random: { 0 })
+    let context = DialogueContext(situation: .greeting, petName: "멍멍이",
+                                  stage: .baby, level: 1, satiety: 100,
+                                  species: .dog, personality: .aloof)
+    let line = await provider.line(for: context)
+    #expect(line.hasPrefix("흥, "))  // 새침 접두
+    #expect(line.hasSuffix("멍!"))   // 강아지 감탄사
+}
+
+@Test func offlineAppliesPersonalitySuffixAfterInterjection() async {
+    let provider = TemplateDialogueProvider(random: { 0 })
+    let context = DialogueContext(situation: .greeting, petName: "스르륵",
+                                  stage: .baby, level: 1, satiety: 100,
+                                  species: .snake, personality: .shy)
+    let line = await provider.line(for: context)
+    #expect(line.hasSuffix("…"))            // 수줍음 접미가 가장 끝
+    #expect(line.contains("스르륵~"))        // 뱀 감탄사가 접미 앞
+}
