@@ -133,6 +133,13 @@ struct ExpandedPanelView: View {
                 isNameFieldFocused = false
             }
 
+            // 성격 — 알 단계에서는 숨김(부화 시 공개) (스펙 §7.1)
+            if pet.stage != .egg {
+                Text("성격 · \(pet.personality.koreanName)")
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundStyle(CuteTheme.cream.opacity(0.7))
+            }
+
             VStack(spacing: 7) {
                 statRow(icon: "🍚", label: "포만감", value: pet.satiety, total: 100,
                         color: CuteTheme.green)
