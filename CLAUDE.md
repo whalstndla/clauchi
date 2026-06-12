@@ -53,10 +53,12 @@ Claude Code hooks → clauchi-hook CLI → ~/.clauchi/events.jsonl → Clauchi.a
 - 빌드: `swift build`
 - 개발 실행: `swift run ClauchiApp` 또는 `.build/debug/ClauchiApp` (알약이 노치에 표시됨)
 - 훅 단독 테스트: `echo '{"session_id":"t"}' | swift run ClauchiHook stop`
-- 배포 번들: `Scripts/make-app-bundle.sh` → `build/Clauchi.app` (Info.plist에 빌드 커밋 각인)
-- 자동 업데이트: 설치 번들이 `origin/main`을 실행 시 + 6시간마다 확인해, 새 커밋이 있으면
-  전용 worktree(`Scripts/build-update.sh`)에서 자가 재빌드 → "재시작하여 적용"(원자적 교체).
-  설정 탭에서 수동 확인 가능. dev 실행·번들 이동 시엔 비활성(조용히).
+- 배포 번들: `Scripts/make-app-bundle.sh [version]` → `build/Clauchi.app` (CFBundleShortVersionString 각인)
+- 릴리스 발행: `Scripts/release.sh <version>` — 번들 빌드 → `ditto` zip → `gh release create v<version>`.
+- 자동 업데이트: 설치 번들이 GitHub Releases의 최신 semver 태그를 실행 시 + 6시간마다 확인해,
+  새 버전이면 zip을 받아(미서명 → `xattr`로 격리 제거) "재시작하여 적용"(backup-restore 원자 교체).
+  설정 탭에서 수동 확인. dev/번들 아님 시 비활성. 첫 설치는 미서명이라 1회 수동 허용 필요
+  (우클릭→열기 / `xattr -dr com.apple.quarantine`). 서명/공증은 추후 release.sh에 추가 가능.
 - 게임 시뮬레이션: UI 디버그 메뉴는 제거됨(사용자 요청) — 엔진의
   `debugAdvance`/`debugApply`는 테스트 전용 API로 유지. 수동 검증은
   `~/.clauchi/events.jsonl`에 이벤트 줄을 직접 append 하는 방식 사용
