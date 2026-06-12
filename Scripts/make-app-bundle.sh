@@ -12,7 +12,8 @@ mkdir -p "$APP/Contents/MacOS"
 cp .build/release/ClauchiApp "$APP/Contents/MacOS/Clauchi"
 cp .build/release/ClauchiHook "$APP/Contents/MacOS/ClauchiHook"
 
-cat > "$APP/Contents/Info.plist" <<'PLIST'
+COMMIT=$(git rev-parse HEAD)
+cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -24,6 +25,7 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
     <key>CFBundleShortVersionString</key><string>0.1.0</string>
     <key>LSMinimumSystemVersion</key><string>26.0</string>
     <key>LSUIElement</key><true/>
+    <key>ClauchiBuildCommit</key><string>$COMMIT</string>
 </dict>
 </plist>
 PLIST
