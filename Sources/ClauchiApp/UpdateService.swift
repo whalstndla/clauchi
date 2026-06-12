@@ -8,8 +8,8 @@ final class UpdateService {
     enum Phase: Equatable {
         case idle
         case checking
-        case building
-        case readyToApply(remoteCommit: String)
+        case downloading
+        case readyToApply(version: String)
         case upToDate
         case failed(String)
     }
@@ -18,80 +18,71 @@ final class UpdateService {
     // readyToApply 진입 시 1회 호출(토스트용) — AppModel이 주입
     var onReadyToApply: (() -> Void)?
 
-    private let repoRoot: URL?
-    private let buildCommit: String?
+    private let version: String?
     private let installedAppURL: URL?
-    // build-update.sh 출력 위치와 일치
+    // 다운로드분을 풀어둘 스테이징 위치
     private let stagingAppURL = FileManager.default.homeDirectoryForCurrentUser
         .appendingPathComponent(".clauchi/update/staging/Clauchi.app")
+    nonisolated static let repoSlug = "whalstndla/clauchi"
 
-    init(repoRoot: URL? = BuildInfo.repoRoot,
-         buildCommit: String? = BuildInfo.commit,
+    init(version: String? = BuildInfo.version,
          installedAppURL: URL? = BuildInfo.installedAppURL) {
-        self.repoRoot = repoRoot
-        self.buildCommit = buildCommit
+        self.version = version
         self.installedAppURL = installedAppURL
     }
 
-    // 설치 번들 + git 레포일 때만 활성
-    var isEnabled: Bool { repoRoot != nil && buildCommit != nil && installedAppURL != nil }
+    // 설치 번들(버전 + .app)일 때만 활성
+    var isEnabled: Bool { version != nil && installedAppURL != nil }
 
-    // 업데이트 확인 — 이미 진행 중이면 무시
+    // 최신 릴리스 확인 — 이미 진행 중이면 무시
     func check() {
-        guard isEnabled, let repo = repoRoot, let build = buildCommit else { return }
+        guard isEnabled, let installed = version else { return }
         switch phase {
-        case .checking, .building, .readyToApply: return
+        case .checking, .downloading, .readyToApply: return
         case .idle, .upToDate, .failed: break
         }
         phase = .checking
-        let repoPath = repo.path
-        // detached에는 Sendable 값(String)만 넘기고, self는 MainActor로 돌아와서 만진다 (Swift 6)
         Task {
-            let status = await Task.detached(priority: .utility) { () -> UpdateStatus in
-                _ = Self.run("/usr/bin/git", ["-C", repoPath, "fetch", "origin", "main"])
-                let remote = Self.run("/usr/bin/git", ["-C", repoPath, "rev-parse", "origin/main"])
-                    .out.trimmingCharacters(in: .whitespacesAndNewlines)
-                let ancestor = Self.run("/usr/bin/git",
-                    ["-C", repoPath, "merge-base", "--is-ancestor", build, "origin/main"]).code == 0
-                return UpdateChecker.status(
-                    buildCommit: build,
-                    remoteCommit: remote.isEmpty ? nil : remote,
-                    buildIsAncestorOfRemote: ancestor)
-            }.value
-            self.handle(status)
-        }
-    }
-
-    private func handle(_ status: UpdateStatus) {
-        switch status {
-        case .upToDate: phase = .upToDate
-        case .skip: phase = .idle
-        case .updateAvailable(let remote): startBuild(remoteCommit: remote)
-        }
-    }
-
-    private func startBuild(remoteCommit: String) {
-        guard let repo = repoRoot else { return }
-        phase = .building
-        let script = repo.appendingPathComponent("Scripts/build-update.sh").path
-        let repoPath = repo.path
-        Task {
-            let ok = await Task.detached(priority: .utility) { () -> Bool in
-                let result = Self.run("/bin/bash", [script, repoPath])
-                return result.code == 0 && result.out.contains("STAGED:")
-            }.value
-            if ok {
-                // remoteCommit은 표시용(advisory) — check 시점 값이라 실제 스테이징(빌드 시점 재fetch한 origin/main)과
-                // 다를 수 있으나 무해하다. applyAndRestart는 커밋이 아니라 스테이징 번들을 그대로 교체한다.
-                self.phase = .readyToApply(remoteCommit: remoteCommit)
-                self.onReadyToApply?()
-            } else {
-                self.phase = .failed("업데이트 빌드 실패")
+            do {
+                let release = try await Self.fetchLatestRelease()
+                switch ReleaseVersionChecker.status(installed: installed, latest: release.version) {
+                case .upToDate: phase = .upToDate
+                case .skip: phase = .idle
+                case .updateAvailable(let newVersion):
+                    if let assetURL = release.zipAssetURL {
+                        download(from: assetURL, version: newVersion)
+                    } else {
+                        phase = .idle
+                    }
+                }
+            } catch {
+                phase = .idle   // 오프라인/API 실패 → 조용히 스킵
             }
         }
     }
 
-    // 재시작하여 적용 — 헬퍼가 현재 앱 종료 대기 후 교체·재실행, 현재 앱 종료
+    private func download(from assetURL: URL, version newVersion: String) {
+        phase = .downloading
+        let staging = stagingAppURL
+        Task {
+            do {
+                let (zipData, _) = try await URLSession.shared.data(from: assetURL)
+                let ok = await Task.detached(priority: .utility) { () -> Bool in
+                    Self.extractAndStage(zipData: zipData, stagingApp: staging)
+                }.value
+                if ok {
+                    phase = .readyToApply(version: newVersion)
+                    onReadyToApply?()
+                } else {
+                    phase = .failed("업데이트 추출 실패")
+                }
+            } catch {
+                phase = .failed("다운로드 실패")
+            }
+        }
+    }
+
+    // 재시작하여 적용 — backup-restore 원자 교체 후 재실행, 현재 앱 종료
     func applyAndRestart() {
         guard case .readyToApply = phase, let install = installedAppURL else { return }
         let pid = ProcessInfo.processInfo.processIdentifier
@@ -116,17 +107,76 @@ final class UpdateService {
         NSApp.terminate(nil)
     }
 
-    // 동기 Process 실행 (백그라운드에서만 호출). stderr는 버려 파이프 막힘 방지.
-    nonisolated private static func run(_ launch: String, _ args: [String]) -> (code: Int32, out: String) {
+    // --- 네트워크/추출 (nonisolated) ---
+
+    private struct LatestRelease: Sendable { let version: String; let zipAssetURL: URL? }
+
+    // 공개 릴리스 API (인증 불필요, User-Agent 필수)
+    nonisolated private static func fetchLatestRelease() async throws -> LatestRelease {
+        let url = URL(string: "https://api.github.com/repos/\(repoSlug)/releases/latest")!
+        var request = URLRequest(url: url)
+        request.setValue("Clauchi", forHTTPHeaderField: "User-Agent")
+        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        let (data, _) = try await URLSession.shared.data(for: request)
+        let release = try JSONDecoder().decode(GitHubRelease.self, from: data)
+        let tag = release.tagName
+        let version = tag.hasPrefix("v") ? String(tag.dropFirst()) : tag
+        let zip = release.assets.first { $0.name.hasSuffix(".zip") }?.browserDownloadURL
+        return LatestRelease(version: version, zipAssetURL: zip)
+    }
+
+    private struct GitHubRelease: Decodable {
+        let tagName: String
+        let assets: [Asset]
+        struct Asset: Decodable {
+            let name: String
+            let browserDownloadURL: URL
+            enum CodingKeys: String, CodingKey {
+                case name
+                case browserDownloadURL = "browser_download_url"
+            }
+        }
+        enum CodingKeys: String, CodingKey {
+            case tagName = "tag_name"
+            case assets
+        }
+    }
+
+    // zip(Data) → ditto 추출 → 격리 제거 → 스테이징 (블로킹, detached에서 호출)
+    nonisolated private static func extractAndStage(zipData: Data, stagingApp: URL) -> Bool {
+        let fileManager = FileManager.default
+        let tmpDir = fileManager.temporaryDirectory
+            .appendingPathComponent("clauchi-update-\(UUID().uuidString)")
+        defer { try? fileManager.removeItem(at: tmpDir) }
+        do {
+            try fileManager.createDirectory(at: tmpDir, withIntermediateDirectories: true)
+            let zipPath = tmpDir.appendingPathComponent("Clauchi.zip")
+            try zipData.write(to: zipPath)
+            let extractDir = tmpDir.appendingPathComponent("extract")
+            try fileManager.createDirectory(at: extractDir, withIntermediateDirectories: true)
+            guard run("/usr/bin/ditto", ["-x", "-k", zipPath.path, extractDir.path]) == 0 else { return false }
+            let extractedApp = extractDir.appendingPathComponent("Clauchi.app")
+            guard fileManager.fileExists(atPath: extractedApp.path) else { return false }
+            // 미서명 핵심: 다운로드분의 격리 속성 제거
+            _ = run("/usr/bin/xattr", ["-dr", "com.apple.quarantine", extractedApp.path])
+            try fileManager.createDirectory(at: stagingApp.deletingLastPathComponent(),
+                                            withIntermediateDirectories: true)
+            try? fileManager.removeItem(at: stagingApp)
+            try fileManager.moveItem(at: extractedApp, to: stagingApp)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    nonisolated private static func run(_ launch: String, _ args: [String]) -> Int32 {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: launch)
         process.arguments = args
-        let pipe = Pipe()
-        process.standardOutput = pipe
+        process.standardOutput = FileHandle.nullDevice
         process.standardError = FileHandle.nullDevice
-        do { try process.run() } catch { return (-1, "") }
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        do { try process.run() } catch { return -1 }
         process.waitUntilExit()
-        return (process.terminationStatus, String(data: data, encoding: .utf8) ?? "")
+        return process.terminationStatus
     }
 }

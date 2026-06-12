@@ -82,7 +82,7 @@ struct SettingsView: View {
         switch phase {
         case .idle: "업데이트: 대기"
         case .checking: "업데이트: 확인 중…"
-        case .building: "업데이트: 새 버전 빌드 중…"
+        case .downloading: "업데이트: 새 버전 받는 중…"
         case .readyToApply: "업데이트: 준비됨 — 재시작하면 적용"
         case .upToDate: "업데이트: 최신 상태"
         case .failed(let reason): "업데이트: 실패 (\(reason))"
