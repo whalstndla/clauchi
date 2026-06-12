@@ -88,9 +88,9 @@ public final class PetEngine {
         state.pet.customName = trimmed.isEmpty ? nil : String(trimmed.prefix(12))
     }
 
-    // 리세마라 — 성체가 되기 전(알/아기)에만 새 알로 다시 뽑기. 기록을 남기지 않는다 (스펙 §5)
+    // 리세마라 — rerollLockLevel 미만에서만 새 알로 다시 뽑기. 기록을 남기지 않는다 (스펙 §5)
     public func reroll(now: Date) -> [EngineOutput] {
-        guard state.pet.stage != .adult else { return [] }
+        guard state.pet.level < config.rerollLockLevel else { return [] }
         state.pet = Self.newEgg(collection: state.collection, pool: hatchPool,
                                 now: now, random: random, excluding: state.pet.species)
         hungryWarned = false

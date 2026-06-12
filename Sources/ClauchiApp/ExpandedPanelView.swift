@@ -157,8 +157,15 @@ struct ExpandedPanelView: View {
             }
             .frame(maxWidth: 220)
 
-            // 리세마라 — 성체가 되기 전에만 가능 (스펙 §5)
-            if pet.stage != .adult {
+            // 리세마라 — rerollLockLevel 미만에서만 가능 (스펙 §5)
+            let isRerollLocked = pet.level >= config.rerollLockLevel
+            if isRerollLocked {
+                // 잠금 상태 — 비활성 표시
+                SettingChip(label: "🔒 리세마라 잠금 (Lv.\(config.rerollLockLevel) 이상)",
+                            isOn: false) {}
+                    .opacity(0.4)
+                    .disabled(true)
+            } else {
                 SettingChip(label: rerollArmed
                             ? "정말 새 알로 바꿀까? (한 번 더 클릭)"
                             : "🔄 리세마라 — 새 알 뽑기",

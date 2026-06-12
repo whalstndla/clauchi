@@ -10,7 +10,8 @@ public struct GameConfig: Codable, Equatable, Sendable {
     public var toolUseExpGainCapPerMinute: Int = 6    // 분당 tool-use EXP 상한 (폭주 방지)
     public var satietyDecayPerHour: Double = 10       // 깨어있는 1시간당 감소
     public var hatchExp: Int = 30                     // 알 → 아기
-    public var adultLevel: Int = 10                   // 아기 → 성체
+    public var adultLevel: Int = 5                    // 아기 → 성체
+    public var rerollLockLevel: Int = 10              // 이 레벨 이상이면 리세마라 잠금
     public var graduateLevel: Int = 30                // 성체 → 졸업
     public var hungryThreshold: Double = 20           // 배고픔 경고선
     public var criticalSecondsToDeath: TimeInterval = 6 * 3600
