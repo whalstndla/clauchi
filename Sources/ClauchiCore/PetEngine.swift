@@ -36,6 +36,7 @@ public final class PetEngine {
 
     private var lastTickAt: Date?
     private var recentSatietyGains: [(at: Date, amount: Double)] = []
+    private var recentToolExpGains: [(at: Date, amount: Int)] = []
     private var recentMoodGains: [(at: Date, amount: Double)] = []
     private var workingUntil: Date?
     private var hungryWarned: Bool
@@ -114,6 +115,7 @@ public final class PetEngine {
         case .toolUse:
             workingUntil = now.addingTimeInterval(config.workingWindowSeconds)
             if state.continuousWorkStartedAt == nil { state.continuousWorkStartedAt = now }
+            outputs.append(contentsOf: applyToolUseFeeding(now: now))
         case .stop:
             outputs.append(contentsOf: applyFeeding(now: now))
         case .notification:
@@ -157,6 +159,28 @@ public final class PetEngine {
         let happyBonus = state.pet.mood >= config.moodHappyThreshold
             ? config.happyExpBonusPerStop : 0
         return applyExpGain(config.expPerStop + happyBonus, now: now)
+    }
+
+    // tool-use = 능동 작업 급식 — Claude가 도구를 쓸 때마다 소량 (사용자 요청).
+    // 포만감은 Stop과 같은 분당 캡(satietyGainCapPerMinute)을 공유하고, EXP는 전용 캡을 둬 폭주를 막는다.
+    private func applyToolUseFeeding(now: Date) -> [EngineOutput] {
+        recentSatietyGains.removeAll { now.timeIntervalSince($0.at) >= 60 }
+        let satietyLastMinute = recentSatietyGains.reduce(0) { $0 + $1.amount }
+        let satietyAllowed = max(0, config.satietyGainCapPerMinute - satietyLastMinute)
+        let satietyGain = min(config.satietyPerToolUse, satietyAllowed)
+        if satietyGain > 0 {
+            state.pet.satiety = min(100, state.pet.satiety + satietyGain)
+            recentSatietyGains.append((at: now, amount: satietyGain))
+            state.pet.criticalAccumulatedSeconds = 0
+            if state.pet.satiety > config.hungryThreshold { hungryWarned = false }
+        }
+        recentToolExpGains.removeAll { now.timeIntervalSince($0.at) >= 60 }
+        let expLastMinute = recentToolExpGains.reduce(0) { $0 + $1.amount }
+        let expAllowed = max(0, config.toolUseExpGainCapPerMinute - expLastMinute)
+        let expGain = min(config.expPerToolUse, expAllowed)
+        guard expGain > 0 else { return [] }
+        recentToolExpGains.append((at: now, amount: expGain))
+        return applyExpGain(expGain, now: now)
     }
 
     // 쓰다듬기 — 패널의 펫 클릭 (스펙 §5). 알은 반응하지 않는다

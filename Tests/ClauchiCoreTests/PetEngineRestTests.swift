@@ -43,6 +43,8 @@ let saturday9am = Date(timeIntervalSince1970: 1_780_736_400)
     // 위독 > 작업
     let criticalEngine = TestSupport.makeEngine(state: TestSupport.makeState(satiety: 0))
     _ = criticalEngine.handle(ClaudeEvent(ts: t, event: .toolUse, sessionId: "s1", cwd: nil))
+    // tool-use 급식으로 오른 포만감을 위독으로 되돌려 '위독 + 작업 중' 상황을 만든다
+    _ = criticalEngine.debugApply(.setSatiety(0), now: t)
     #expect(criticalEngine.visualState(now: t.addingTimeInterval(1)) == .critical)
 
     // 작업 중 (toolUse 후 30초 이내)

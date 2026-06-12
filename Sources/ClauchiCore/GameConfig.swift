@@ -5,6 +5,9 @@ public struct GameConfig: Codable, Equatable, Sendable {
     public var satietyPerStop: Double = 10            // Stop 1회 포만감
     public var satietyGainCapPerMinute: Double = 20   // 분당 포만감 획득 상한
     public var expPerStop: Int = 5                    // Stop 1회 EXP
+    public var satietyPerToolUse: Double = 2          // tool-use(능동 작업) 1회 포만감 — Stop의 1/5
+    public var expPerToolUse: Int = 1                 // tool-use 1회 EXP
+    public var toolUseExpGainCapPerMinute: Int = 6    // 분당 tool-use EXP 상한 (폭주 방지)
     public var satietyDecayPerHour: Double = 10       // 깨어있는 1시간당 감소
     public var hatchExp: Int = 30                     // 알 → 아기
     public var adultLevel: Int = 10                   // 아기 → 성체
