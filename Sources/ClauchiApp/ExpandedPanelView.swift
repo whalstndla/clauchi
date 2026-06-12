@@ -9,6 +9,8 @@ struct ExpandedPanelView: View {
     @State private var isEditingName = false
     @State private var nameInput = ""
     @FocusState private var isNameFieldFocused: Bool
+    @State private var chatInput = ""           // 말걸기 입력
+    @FocusState private var isChatFieldFocused: Bool
 
     private let tabs = ["🐾 펫", "📒 도감", "⚙️ 설정"]
 
@@ -197,6 +199,32 @@ struct ExpandedPanelView: View {
                         }
                     }
                 }
+            }
+
+            // 말걸기 입력창 — 알 단계 제외
+            if pet.stage != .egg {
+                HStack(spacing: 6) {
+                    TextField("펫에게 말 걸기...", text: $chatInput)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(size: 11, design: .rounded))
+                        .focused($isChatFieldFocused)
+                        .onSubmit {
+                            model.talkToPet(message: chatInput)
+                            chatInput = ""
+                            isChatFieldFocused = false
+                        }
+                    Button("전송") {
+                        model.talkToPet(message: chatInput)
+                        chatInput = ""
+                        isChatFieldFocused = false
+                    }
+                    .buttonStyle(.plain)
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(chatInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                    ? .gray : CuteTheme.yellow)
+                    .disabled(chatInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+                .frame(maxWidth: 240)
             }
         }
     }

@@ -167,6 +167,21 @@ final class AppModel {
         engine.manualFeedCooldownRemaining(now: clock.now())
     }
 
+    // 말걸기 — 펫과 대화. 채팅 내용을 userPrompt로 담아 AI가 맥락 있게 반응
+    func talkToPet(message: String) {
+        let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, engine.state.pet.stage != .egg else { return }
+        let pet = engine.state.pet
+        let context = DialogueContext(
+            situation: .talked, petName: pet.displayName,
+            stage: pet.stage, level: pet.level,
+            satiety: Int(pet.satiety), mood: Int(pet.mood),
+            userPrompt: trimmed,
+            species: pet.species, personality: pet.personality)
+        enqueueDialogueToast(context: context, expression: .happy,
+                             species: pet.species, stage: pet.stage)
+    }
+
     private func speakToast(situation: DialogueSituation) {
         let pet = engine.state.pet
         let context = DialogueContext(

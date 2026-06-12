@@ -64,6 +64,10 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
                    "포만감 \(context.satiety)/100, 기분 \(context.mood)/100). " +
                    "성격은 \(context.personality.aiHint). "
         if let userPrompt = context.userPrompt {
+            if context.situation == .talked {
+                return base + "주인이 너에게 건넨 말: \"\(Self.sanitizeInput(userPrompt))\". " +
+                              "이 말에 펫답게 대화로 반응 한마디:"
+            }
             return base + "주인이 방금 Claude에게 시킨 작업: \"\(Self.sanitizeInput(userPrompt))\". " +
                           "이 작업에 대해 펫답게 응원/반응 한마디:"
         }
