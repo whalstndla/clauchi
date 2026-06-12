@@ -94,17 +94,55 @@ public struct PetState: Codable, Equatable, Sendable {
     }
 }
 
+// 주인 성별 — 대사 호칭에만 영향 (게임 수치 무관)
+public enum OwnerGender: String, Codable, Equatable, Sendable {
+    case unspecified, male, female
+
+    // 이름 미입력 시 사용할 기본 호칭
+    public var honorific: String {
+        switch self {
+        case .unspecified: "주인님"
+        case .male: "형"
+        case .female: "언니"
+        }
+    }
+}
+
 public struct GameSettings: Codable, Equatable, Sendable {
     public var restWeekdays: Set<Int>   // Calendar.weekday (1=일 ... 7=토)
     public var vacationMode: Bool
     public var dialogueAIEnabled: Bool
     public var launchAtLogin: Bool
-    public init(restWeekdays: Set<Int>, vacationMode: Bool, dialogueAIEnabled: Bool, launchAtLogin: Bool) {
+    public var ownerName: String        // 빈 문자열이면 성별 기반 기본 호칭 사용
+    public var ownerGender: OwnerGender
+    public init(restWeekdays: Set<Int>, vacationMode: Bool, dialogueAIEnabled: Bool,
+                launchAtLogin: Bool, ownerName: String = "",
+                ownerGender: OwnerGender = .unspecified) {
         self.restWeekdays = restWeekdays; self.vacationMode = vacationMode
         self.dialogueAIEnabled = dialogueAIEnabled; self.launchAtLogin = launchAtLogin
+        self.ownerName = ownerName; self.ownerGender = ownerGender
     }
+
+    enum CodingKeys: String, CodingKey {
+        case restWeekdays, vacationMode, dialogueAIEnabled, launchAtLogin
+        case ownerName, ownerGender
+    }
+
+    // ownerName/ownerGender 없는 구버전 세이브 마이그레이션 — 기본값으로
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        restWeekdays = try container.decode(Set<Int>.self, forKey: .restWeekdays)
+        vacationMode = try container.decode(Bool.self, forKey: .vacationMode)
+        dialogueAIEnabled = try container.decode(Bool.self, forKey: .dialogueAIEnabled)
+        launchAtLogin = try container.decode(Bool.self, forKey: .launchAtLogin)
+        ownerName = try container.decodeIfPresent(String.self, forKey: .ownerName) ?? ""
+        ownerGender = try container.decodeIfPresent(OwnerGender.self, forKey: .ownerGender)
+            ?? .unspecified
+    }
+
     public static let `default` = GameSettings(
-        restWeekdays: [1, 7], vacationMode: false, dialogueAIEnabled: true, launchAtLogin: false)
+        restWeekdays: [1, 7], vacationMode: false, dialogueAIEnabled: true,
+        launchAtLogin: false, ownerName: "", ownerGender: .unspecified)
 }
 
 public struct GameState: Codable, Equatable, Sendable {

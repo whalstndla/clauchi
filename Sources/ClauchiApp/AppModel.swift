@@ -177,7 +177,9 @@ final class AppModel {
             stage: pet.stage, level: pet.level,
             satiety: Int(pet.satiety), mood: Int(pet.mood),
             userPrompt: trimmed,
-            species: pet.species, personality: pet.personality)
+            species: pet.species, personality: pet.personality,
+            ownerName: engine.state.settings.ownerName,
+            ownerGender: engine.state.settings.ownerGender)
         enqueueDialogueToast(context: context, expression: .happy,
                              species: pet.species, stage: pet.stage)
     }
@@ -188,7 +190,9 @@ final class AppModel {
             situation: situation, petName: pet.displayName,
             stage: pet.stage, level: pet.level, satiety: Int(pet.satiety),
             mood: Int(pet.mood),
-            species: pet.species, personality: pet.personality)
+            species: pet.species, personality: pet.personality,
+            ownerName: engine.state.settings.ownerName,
+            ownerGender: engine.state.settings.ownerGender)
         let expression: ClauchiCore.Expression = switch situation {
         case .criticalWarning: .critical
         case .hungryWarning, .longWorkBreak: .sad
@@ -205,7 +209,9 @@ final class AppModel {
             situation: .promptReaction, petName: pet.displayName,
             stage: pet.stage, level: pet.level, satiety: Int(pet.satiety),
             mood: Int(pet.mood), userPrompt: promptText,
-            species: pet.species, personality: pet.personality)
+            species: pet.species, personality: pet.personality,
+            ownerName: engine.state.settings.ownerName,
+            ownerGender: engine.state.settings.ownerGender)
         enqueueDialogueToast(context: context, expression: .happy,
                              species: pet.species, stage: pet.stage)
     }
@@ -216,7 +222,9 @@ final class AppModel {
             situation: situation, petName: record.customName ?? record.species.koreanName,
             stage: .adult, level: record.finalLevel,
             satiety: situation == .died ? 0 : 100,
-            species: record.species, personality: record.personality ?? .cheerful)
+            species: record.species, personality: record.personality ?? .cheerful,
+            ownerName: engine.state.settings.ownerName,
+            ownerGender: engine.state.settings.ownerGender)
         enqueueDialogueToast(context: context, expression: expression,
                              species: record.species, stage: .adult)
     }

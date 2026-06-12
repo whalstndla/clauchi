@@ -13,6 +13,36 @@ struct SettingsView: View {
         // 엔진 상태는 관찰 불가 — 반드시 모델의 스냅샷을 읽어야 토글이 갱신된다
         let settings = model.settings
         VStack(alignment: .leading, spacing: 12) {
+            // 주인 프로필 — 대사 호칭/개인화에 사용
+            Text("주인 프로필 (대사 호칭에 사용)")
+                .font(.caption).foregroundStyle(.gray)
+            TextField("주인 이름 (미입력 시 기본 호칭)", text: Binding(
+                get: { model.settings.ownerName },
+                set: { name in
+                    var updated = model.settings
+                    updated.ownerName = String(name.prefix(12))
+                    model.applySettings(updated)
+                }
+            ))
+            .textFieldStyle(.roundedBorder)
+            .font(.system(size: 11, design: .rounded))
+
+            HStack(spacing: 6) {
+                Text("성별")
+                    .font(.caption).foregroundStyle(.gray)
+                ForEach([("미설정", OwnerGender.unspecified),
+                         ("남성", .male), ("여성", .female)], id: \.1) { label, gender in
+                    let isOn = settings.ownerGender == gender
+                    SettingChip(label: label, isOn: isOn) {
+                        var updated = model.settings
+                        updated.ownerGender = gender
+                        model.applySettings(updated)
+                    }
+                }
+            }
+
+            Divider().overlay(Color(white: 0.3))
+
             Text("휴식 요일 (포만감 정지 · 초록 = 켜짐)")
                 .font(.caption).foregroundStyle(.gray)
             HStack(spacing: 4) {

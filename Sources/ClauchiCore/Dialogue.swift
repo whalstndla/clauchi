@@ -11,14 +11,23 @@ public struct DialogueContext: Equatable, Sendable {
     public var userPrompt: String?
     public var species: Species
     public var personality: Personality
+    public var ownerName: String        // 빈 문자열이면 성별 기반 기본 호칭 사용
+    public var ownerGender: OwnerGender
     public init(situation: DialogueSituation, petName: String,
                 stage: Stage, level: Int, satiety: Int, mood: Int = 50,
                 userPrompt: String? = nil,
-                species: Species = .rat, personality: Personality = .cheerful) {
+                species: Species = .rat, personality: Personality = .cheerful,
+                ownerName: String = "", ownerGender: OwnerGender = .unspecified) {
         self.situation = situation; self.petName = petName
         self.stage = stage; self.level = level; self.satiety = satiety
         self.mood = mood; self.userPrompt = userPrompt
         self.species = species; self.personality = personality
+        self.ownerName = ownerName; self.ownerGender = ownerGender
+    }
+
+    // 호칭 — 이름이 있으면 이름, 없으면 성별 기반 기본 호칭
+    public var ownerHonorific: String {
+        ownerName.isEmpty ? ownerGender.honorific : ownerName
     }
 }
 
@@ -39,6 +48,7 @@ public struct TemplateDialogueProvider: DialogueProviding {
         let base = pool[index]
             .replacingOccurrences(of: "{name}", with: context.petName)
             .replacingOccurrences(of: "{level}", with: String(context.level))
+            .replacingOccurrences(of: "{owner}", with: context.ownerHonorific)
         return decorate(base, for: context)
     }
 
@@ -78,11 +88,11 @@ public struct TemplateDialogueProvider: DialogueProviding {
         case .died:
             ["...여기까지인가 봐. 안녕...", "배고팠어... 다음 친구는 잘 챙겨줘..."]
         case .hungryWarning:
-            ["배고파... 클로드한테 일 좀 시켜줘", "꼬르륵... 작업 하나만 부탁해"]
+            ["배고파... {owner}, Claude한테 일 좀 시켜줘", "꼬르륵... 작업 하나만 부탁해"]
         case .criticalWarning:
             ["나 진짜 쓰러질 것 같아...!", "살려줘... 밥... 밥이 필요해...!"]
         case .permissionWaiting:
-            ["주인님! Claude가 허락 기다리고 있어!", "터미널 좀 봐줘! 기다리는 중이야!"]
+            ["{owner}! Claude가 허락 기다리고 있어!", "터미널 좀 봐줘! 기다리는 중이야!"]
         case .longWorkBreak:
             ["1시간 넘게 일했어. 스트레칭 한번 어때?", "쉬엄쉬엄 해~ 물도 마시고!"]
         case .randomChatter:

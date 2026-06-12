@@ -60,9 +60,15 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
         let speech = SpeciesSpeech.style(for: context.species)
         // AI 경로는 죽음/졸업 상황에도 성격 힌트를 그대로 주입한다(오프라인 decorate는
         // 슬픈 상황에 데코를 생략 — 의도된 비대칭). 상황 설명이 톤을 지배하므로 충돌 없음.
+        var ownerInfo = ""
+        if !context.ownerName.isEmpty {
+            ownerInfo = "주인 이름은 \(context.ownerName). "
+        }
+        ownerInfo += context.ownerGender == .unspecified ? "" :
+            "주인 성별은 \(context.ownerGender == .male ? "남성" : "여성"). "
         let base = "너는 \(speech.aiHint) 말투의 \(context.petName)(Lv.\(context.level), " +
                    "포만감 \(context.satiety)/100, 기분 \(context.mood)/100). " +
-                   "성격은 \(context.personality.aiHint). "
+                   "성격은 \(context.personality.aiHint). " + ownerInfo
         if let userPrompt = context.userPrompt {
             if context.situation == .talked {
                 return base + "주인이 너에게 건넨 말: \"\(Self.sanitizeInput(userPrompt))\". " +
