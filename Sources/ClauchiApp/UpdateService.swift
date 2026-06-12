@@ -81,6 +81,8 @@ final class UpdateService {
                 return result.code == 0 && result.out.contains("STAGED:")
             }.value
             if ok {
+                // remoteCommit은 표시용(advisory) — check 시점 값이라 실제 스테이징(빌드 시점 재fetch한 origin/main)과
+                // 다를 수 있으나 무해하다. applyAndRestart는 커밋이 아니라 스테이징 번들을 그대로 교체한다.
                 self.phase = .readyToApply(remoteCommit: remoteCommit)
                 self.onReadyToApply?()
             } else {
@@ -100,10 +102,11 @@ final class UpdateService {
         let helper = """
             while kill -0 \(pid) 2>/dev/null; do sleep 0.3; done
             [ -d "\(staging)" ] || exit 1
-            rm -rf "\(stagingNew)"
+            rm -rf "\(stagingNew)" "\(installPath).bak"
             cp -R "\(staging)" "\(stagingNew)" &&
-            rm -rf "\(installPath)" &&
+            mv "\(installPath)" "\(installPath).bak" &&
             mv "\(stagingNew)" "\(installPath)" &&
+            rm -rf "\(installPath).bak" &&
             open "\(installPath)"
             """
         let process = Process()
