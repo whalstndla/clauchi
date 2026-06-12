@@ -97,6 +97,8 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
         case .petted: "주인이 쓰다듬어줘서 기분이 좋다"
         case .rerolled: "주인이 새 알을 뽑았다. 새 알의 설렘을 전한다"
         case .promptReaction: "주인이 방금 Claude에게 새 작업을 시켰다"
+        case .manualFed: "주인이 직접 밥을 줬다. 기쁘고 감사하다"
+        case .talked: "주인이 펫에게 말을 걸어왔다. 대화에 즐겁게 반응"
         }
     }
 

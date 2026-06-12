@@ -3,6 +3,8 @@ import Foundation
 // 게임 튜닝 수치 — 하드코딩 금지, 전부 여기로 모은다 (스펙 §5)
 public struct GameConfig: Codable, Equatable, Sendable {
     public var satietyPerStop: Double = 10            // Stop 1회 포만감
+    public var satietyPerManualFeed: Double = 20      // 수동 밥주기 1회 포만감
+    public var manualFeedCooldownSeconds: TimeInterval = 300  // 수동 밥주기 5분 쿨다운
     public var satietyGainCapPerMinute: Double = 20   // 분당 포만감 획득 상한
     public var expPerStop: Int = 5                    // Stop 1회 EXP
     public var satietyPerToolUse: Double = 2          // tool-use(능동 작업) 1회 포만감 — Stop의 1/5

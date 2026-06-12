@@ -96,6 +96,11 @@ public struct TemplateDialogueProvider: DialogueProviding {
         case .promptReaction:
             ["오 그거 재밌겠다! 화이팅!", "접수 완료! Claude가 열심히 할 거야",
              "그 작업 끝나면 밥 주는 거지? 🍚"]
+        case .manualFed:
+            ["냠냠! 맛있어! 고마워! 🍚", "밥 줘서 기뻐! 더 힘낼 수 있어!", "배가 든든해졌어~"]
+        case .talked:
+            ["그거 재밌는 얘기다!", "헤헤, 그렇구나!", "나도 그 생각 했어!",
+             "주인이 말 걸어줘서 기뻐!", "오~ 그런 일이 있었어?"]
         }
     }
 }

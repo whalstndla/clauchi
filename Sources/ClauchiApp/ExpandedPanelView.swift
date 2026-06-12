@@ -152,6 +152,22 @@ struct ExpandedPanelView: View {
                         color: CuteTheme.yellow)
             }
 
+            // 수동 밥주기 — 알 단계 제외. 쿨다운은 frameIndex(0.5초)마다 자동 갱신
+            let manualFeedCooldown = model.manualFeedCooldownRemaining
+            if pet.stage != .egg {
+                SettingChip(
+                    label: manualFeedCooldown > 0
+                        ? "🍚 밥 주기 (\(Int(manualFeedCooldown))초 후 가능)"
+                        : "🍚 밥 주기",
+                    isOn: false
+                ) {
+                    model.manualFeed()
+                }
+                .frame(maxWidth: 220)
+                .disabled(manualFeedCooldown > 0)
+                .opacity(manualFeedCooldown > 0 ? 0.5 : 1)
+            }
+
             SettingSwitchRow(label: "🏖️ 휴가 모드", isOn: model.settings.vacationMode) { on in
                 model.toggleVacation(on)
             }

@@ -8,6 +8,7 @@ public enum DialogueSituation: String, Equatable, Sendable {
     case greeting, returnGreeting, levelUp, hatched, evolvedToAdult, graduated, died
     case hungryWarning, criticalWarning, permissionWaiting, longWorkBreak
     case randomChatter, vacationReturn, petted, rerolled, promptReaction
+    case manualFed, talked
 }
 
 public enum EngineOutput: Equatable, Sendable {
@@ -42,6 +43,7 @@ public final class PetEngine {
     private var hungryWarned: Bool
     private var lastNotificationSpokeAt: Date?
     private var lastPromptReactionAt: Date?
+    private var lastManualFeedAt: Date?
 
     public init(config: GameConfig = .default, state: GameState,
                 hatchPool: [Species], calendar: Calendar = .current,
@@ -197,6 +199,24 @@ public final class PetEngine {
             if random() < 0.3 { outputs.append(.speak(.petted)) }
         }
         return outputs
+    }
+
+    // 수동 밥주기 — 5분 쿨다운, 알 단계 제외 (포만감만 채우고 EXP는 없음)
+    public func manualFeed(now: Date) -> [EngineOutput] {
+        guard state.pet.stage != .egg else { return [] }
+        if let last = lastManualFeedAt,
+           now.timeIntervalSince(last) < config.manualFeedCooldownSeconds { return [] }
+        lastManualFeedAt = now
+        state.pet.satiety = min(100, state.pet.satiety + config.satietyPerManualFeed)
+        state.pet.criticalAccumulatedSeconds = 0
+        if state.pet.satiety > config.hungryThreshold { hungryWarned = false }
+        return [.speak(.manualFed)]
+    }
+
+    // 남은 쿨다운 초 (0이면 즉시 가능)
+    public func manualFeedCooldownRemaining(now: Date) -> TimeInterval {
+        guard let last = lastManualFeedAt else { return 0 }
+        return max(0, config.manualFeedCooldownSeconds - now.timeIntervalSince(last))
     }
 
     // EXP 획득 → 부화/레벨업/진화/졸업 (스펙 §5 생애 주기)

@@ -157,6 +157,16 @@ final class AppModel {
         process(engine.petPet(now: clock.now()))
     }
 
+    // 수동 밥주기 — 패널의 밥 주기 버튼
+    func manualFeed() {
+        process(engine.manualFeed(now: clock.now()))
+        saveNow()
+    }
+
+    var manualFeedCooldownRemaining: TimeInterval {
+        engine.manualFeedCooldownRemaining(now: clock.now())
+    }
+
     private func speakToast(situation: DialogueSituation) {
         let pet = engine.state.pet
         let context = DialogueContext(
