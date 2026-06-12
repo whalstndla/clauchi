@@ -96,9 +96,15 @@ final class UpdateService {
         let installPath = install.path
         let installDir = install.deletingLastPathComponent().path
         let staging = stagingAppURL.path
+        let stagingNew = installDir + "/.Clauchi.app.new"
         let helper = """
             while kill -0 \(pid) 2>/dev/null; do sleep 0.3; done
-            rm -rf "\(installPath)" && cp -R "\(staging)" "\(installDir)/" && open "\(installPath)"
+            [ -d "\(staging)" ] || exit 1
+            rm -rf "\(stagingNew)"
+            cp -R "\(staging)" "\(stagingNew)" &&
+            rm -rf "\(installPath)" &&
+            mv "\(stagingNew)" "\(installPath)" &&
+            open "\(installPath)"
             """
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/bash")
