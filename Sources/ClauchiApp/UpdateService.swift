@@ -117,7 +117,10 @@ final class UpdateService {
         var request = URLRequest(url: url)
         request.setValue("Clauchi", forHTTPHeaderField: "User-Agent")
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            throw URLError(.badServerResponse)   // 비2xx(레이트리밋/릴리스 없음) → catch → 조용히 스킵
+        }
         let release = try JSONDecoder().decode(GitHubRelease.self, from: data)
         let tag = release.tagName
         let version = tag.hasPrefix("v") ? String(tag.dropFirst()) : tag
