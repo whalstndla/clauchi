@@ -46,8 +46,28 @@ struct CollectionView: View {
                             .foregroundStyle(.white.opacity(0.5))
                             .lineLimit(1)
                     }
+
+                    // 현재 펫이면 현재 레벨, 아니면 졸업/사망 기록의 레벨·생존일수·커스텀 이름
+                    if isCurrent {
+                        Text("Lv.\(model.engine.state.pet.level)")
+                            .font(.system(size: 8, design: .monospaced))
+                            .foregroundStyle(CuteTheme.yellow.opacity(0.7))
+                            .lineLimit(1)
+                    } else if let record = records.last(where: { $0.species == species }),
+                              graduated || died {
+                        if let customName = record.customName {
+                            Text(customName)
+                                .font(.system(size: 8, design: .rounded))
+                                .foregroundStyle(CuteTheme.cream.opacity(0.6))
+                                .lineLimit(1)
+                        }
+                        Text("Lv.\(record.finalLevel) · \(record.daysLived)일")
+                            .font(.system(size: 8, design: .monospaced))
+                            .foregroundStyle(.white.opacity(0.4))
+                            .lineLimit(1)
+                    }
                 }
-                .padding(.vertical, 6)
+                .padding(.vertical, 8)
                 .frame(maxWidth: .infinity)
                 .background(
                     RoundedRectangle(cornerRadius: 10).fill(CuteTheme.slot.opacity(0.6)))
