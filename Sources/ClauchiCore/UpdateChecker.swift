@@ -1,5 +1,3 @@
-import Foundation
-
 // 자동 업데이트 판정 결과
 public enum UpdateStatus: Equatable, Sendable {
     case upToDate
