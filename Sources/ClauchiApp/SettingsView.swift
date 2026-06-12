@@ -57,10 +57,35 @@ struct SettingsView: View {
                 }
             }
 
+            if model.updateService.isEnabled {
+                Divider().overlay(Color(white: 0.3))
+                Text(updateStatusText(model.updateService.phase))
+                    .font(.caption).foregroundStyle(.gray)
+                SettingChip(label: "업데이트 확인", isOn: false) {
+                    model.updateService.check()
+                }
+                if case .readyToApply = model.updateService.phase {
+                    SettingChip(label: "재시작하여 적용", isOn: true) {
+                        model.updateService.applyAndRestart()
+                    }
+                }
+            }
+
             // Dock 아이콘이 없는 앱이라 종료 수단이 여기뿐이다
             SettingChip(label: "Clauchi 종료", isOn: false) {
                 NSApp.terminate(nil)
             }
+        }
+    }
+
+    private func updateStatusText(_ phase: UpdateService.Phase) -> String {
+        switch phase {
+        case .idle: "업데이트: 대기"
+        case .checking: "업데이트: 확인 중…"
+        case .building: "업데이트: 새 버전 빌드 중…"
+        case .readyToApply: "업데이트: 준비됨 — 재시작하면 적용"
+        case .upToDate: "업데이트: 최신 상태"
+        case .failed(let reason): "업데이트: 실패 (\(reason))"
         }
     }
 }
