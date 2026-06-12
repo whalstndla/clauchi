@@ -15,6 +15,8 @@ final class AppModel {
     let store: PersistenceStore
     let reader: EventLogReader
     let toastPresenter = ToastPresenter()
+    let updateService = UpdateService()
+    private var updateTimer: Timer?
     var dialogueProvider: any DialogueProviding
 
     private(set) var visualState: VisualState = .idle
@@ -69,6 +71,9 @@ final class AppModel {
         }
         settings = engine.state.settings
         refreshDialogueProvider()
+        updateService.onReadyToApply = { [weak self] in self?.notifyUpdateReady() }
+        updateService.check()                 // 실행 시 1회
+        startUpdateTimer()                     // 이후 6시간마다
         startTimer()
     }
 
@@ -86,6 +91,22 @@ final class AppModel {
         timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.tickNow() }
         }
+    }
+
+    // 6시간마다 업데이트 확인 (스펙 §4.4)
+    private func startUpdateTimer() {
+        updateTimer = Timer.scheduledTimer(withTimeInterval: 6 * 3600, repeats: true) {
+            [weak self] _ in
+            Task { @MainActor in self?.updateService.check() }
+        }
+    }
+
+    // 업데이트 준비됨 → 펫 말풍선 토스트 (스펙 §4.5)
+    private func notifyUpdateReady() {
+        let pet = engine.state.pet
+        toastPresenter.enqueue(ToastPresenter.Toast(
+            text: "새 버전 준비됐어! 재시작하면 적용돼 🔄",
+            expression: .happy, species: pet.species, stage: pet.stage))
     }
 
     private func tickNow() {
