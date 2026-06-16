@@ -21,3 +21,16 @@ private func chatterFires(enabled: Bool) -> Bool {
 @Test func randomChatterDisabledSuppressed() {
     #expect(!chatterFires(enabled: false))
 }
+
+// 배고프면(포만감 ≤ hungryThreshold) 잡담 억제 — 톤 일관성
+@Test func hungryPetSuppressesChatter() {
+    let settings = GameSettings(restWeekdays: [], vacationMode: false,
+                                dialogueAIEnabled: true, launchAtLogin: false,
+                                randomChatterEnabled: true)
+    // 포만감 10 (hungryThreshold 20 이하) — 잡담 조건 충족해도 억제돼야
+    let engine = TestSupport.makeEngine(
+        state: TestSupport.makeState(satiety: 10, stage: .baby, level: 3, settings: settings),
+        random: { 0 })
+    let outputs = engine.debugAdvance(seconds: 60, from: TestSupport.weekday9am)
+    #expect(!outputs.contains(.speak(.randomChatter)))
+}
