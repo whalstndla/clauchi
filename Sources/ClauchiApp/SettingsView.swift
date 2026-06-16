@@ -157,6 +157,12 @@ struct SettingsView: View {
             SettingChip(label: "Clauchi 종료", isOn: false) {
                 NSApp.terminate(nil)
             }
+
+            // 현재 버전 — dev(swift run)엔 번들 버전이 없어 "개발 빌드"
+            Text("Clauchi \(BuildInfo.version.map { "v\($0)" } ?? "개발 빌드")")
+                .font(.caption2)
+                .foregroundStyle(.gray)
+                .frame(maxWidth: .infinity, alignment: .center)
         }
     }
 
