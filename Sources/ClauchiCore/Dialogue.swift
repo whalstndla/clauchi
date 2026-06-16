@@ -78,7 +78,8 @@ public struct TemplateDialogueProvider: DialogueProviding {
     static func pool(for situation: DialogueSituation) -> [String] {
         switch situation {
         case .greeting:
-            ["좋은 아침! 오늘도 코딩하자!", "왔구나! 기다렸어 🐾", "오늘은 뭘 만들어볼까?"]
+            ["좋은 아침! 오늘도 코딩하자!", "왔구나! 기다렸어 🐾", "오늘은 뭘 만들어볼까?",
+             "{owner}, 안녕! 오늘도 화이팅!", "또 만났네! 반가워~"]
         case .returnGreeting:
             ["오랜만이야! 보고 싶었어!", "어디 갔다 왔어? 심심했단 말이야!",
              "{owner}! 돌아왔구나, 반가워!"]
@@ -111,7 +112,9 @@ public struct TemplateDialogueProvider: DialogueProviding {
              "{owner}, 잠깐 쉬어가도 괜찮아!"]
         case .randomChatter:
             ["오늘 코드 잘 짜져?", "버그는 나의 간식!", "심심하다~ 뭐 만들고 있어?",
-             "{owner}는 오늘 기분 어때?"]
+             "{owner}는 오늘 기분 어때?", "커밋은 자주자주 하는 거 알지?",
+             "물 한 잔 마시고 와~ 기다릴게", "오늘도 한 줄 한 줄 멋지다!",
+             "잠깐, 변수명은 잘 지었어?", "리팩터링도 가끔은 필요해~", "테스트는 친구야! 🐾"]
         case .vacationReturn:
             ["휴가 잘 다녀왔어! 선물은... 비밀!", "다시 일할 준비 완료!",
              "푹 쉬었더니 개운해! 또 달려보자"]
@@ -122,9 +125,11 @@ public struct TemplateDialogueProvider: DialogueProviding {
              "새출발이다! 이번엔 누가 나올까?"]
         case .promptReaction:
             ["오 그거 재밌겠다! 화이팅!", "접수 완료! Claude가 열심히 할 거야",
-             "그 작업 끝나면 밥 주는 거지? 🍚"]
+             "그 작업 끝나면 밥 주는 거지? 🍚", "오~ 그거 궁금했는데!",
+             "{owner}, 좋은 선택이야!", "두근두근, 결과가 기대돼!"]
         case .manualFed:
-            ["냠냠! 맛있어! 고마워! 🍚", "밥 줘서 기뻐! 더 힘낼 수 있어!", "배가 든든해졌어~"]
+            ["냠냠! 맛있어! 고마워! 🍚", "밥 줘서 기뻐! 더 힘낼 수 있어!", "배가 든든해졌어~",
+             "{owner} 최고! 잘 먹었습니다!", "이 맛에 일하지~ 🍚"]
         case .talked:
             ["그거 재밌는 얘기다!", "헤헤, 그렇구나!", "나도 그 생각 했어!",
              "주인이 말 걸어줘서 기뻐!", "오~ 그런 일이 있었어?"]
