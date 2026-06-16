@@ -10,12 +10,16 @@ struct SettingsView: View {
     @State private var isHookInstalled = HookInstaller.isInstalled
     @State private var rerollArmed = false   // 리세마라 2단계 확인
     @State private var graduateArmed = false // 조기 졸업 2단계 확인
+    @State private var showChangelog = false // 변경 로그 모달
 
     var body: some View {
         // 엔진 상태는 관찰 불가 — 반드시 모델의 스냅샷을 읽어야 토글이 갱신된다
         let settings = model.settings
         let pet = model.engine.state.pet
         let config = model.engine.config
+        if showChangelog {
+            ChangelogView { showChangelog = false }
+        } else {
         VStack(alignment: .leading, spacing: 12) {
             // (연속 사용일·누적 업적 통계는 도감 탭 헤더로 이동)
 
@@ -167,11 +171,23 @@ struct SettingsView: View {
                 NSApp.terminate(nil)
             }
 
-            // 현재 버전 — dev(swift run)엔 번들 버전이 없어 "개발 빌드"
-            Text("Clauchi \(BuildInfo.version.map { "v\($0)" } ?? "개발 빌드")")
-                .font(.caption2)
-                .foregroundStyle(.gray)
-                .frame(maxWidth: .infinity, alignment: .center)
+            // 현재 버전 + 변경 로그 보기 버튼
+            HStack(spacing: 8) {
+                Spacer()
+                Text("Clauchi \(BuildInfo.version.map { "v\($0)" } ?? "개발 빌드")")
+                    .font(.caption2)
+                    .foregroundStyle(.gray)
+                Button {
+                    showChangelog = true
+                } label: {
+                    Text("📋 로그")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(CuteTheme.yellow)
+                }
+                .buttonStyle(.plain)
+                Spacer()
+            }
+        }
         }
     }
 
