@@ -32,13 +32,21 @@ private struct CollectionGridView: View {
         let currentStage = model.engine.state.pet.stage
         let currentPersonality = model.engine.state.pet.personality
         let stats = CollectionStats(records: records)
+        let gameState = model.engine.state
 
-        VStack(spacing: 10) {
+        VStack(spacing: 8) {
             // 통계 헤더 — 완성률 · 총 생존일수 · 총 사망
             HStack(spacing: 12) {
                 statBadge("⭐", "\(stats.completedSpecies)/\(stats.totalSpecies)")
                 statBadge("📅", "\(stats.totalDaysLived)일")
                 statBadge("🪦", "\(stats.totalDeaths)")
+            }
+            // 누적 업적 — 연속 사용일 · 작업 · 급식 · 쓰다듬기
+            HStack(spacing: 8) {
+                statBadge("🔥", "\(gameState.streakDays)일")
+                statBadge("⌨️", "\(gameState.lifetimeStops)")
+                statBadge("🍚", "\(gameState.lifetimeManualFeeds)")
+                statBadge("🤚", "\(gameState.lifetimePets)")
             }
 
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 10) {

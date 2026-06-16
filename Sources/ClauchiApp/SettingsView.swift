@@ -16,23 +16,8 @@ struct SettingsView: View {
         let settings = model.settings
         let pet = model.engine.state.pet
         let config = model.engine.config
-        let streakDays = model.engine.state.streakDays
-        let lifetimeStops = model.engine.state.lifetimeStops
-        let lifetimeManualFeeds = model.engine.state.lifetimeManualFeeds
-        let lifetimePets = model.engine.state.lifetimePets
         VStack(alignment: .leading, spacing: 12) {
-            // 연속 사용일(스트릭) — 0일이면 숨김
-            if streakDays > 0 {
-                Text("🔥 \(streakDays)일 연속 사용 중")
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
-                    .foregroundStyle(CuteTheme.yellow)
-                    .frame(maxWidth: .infinity, alignment: .center)
-            }
-            // 누적 업적 — 작업/급식 횟수
-            Text("⌨️ 작업 \(lifetimeStops) · 🍚 급식 \(lifetimeManualFeeds) · 🤚 쓰담 \(lifetimePets)")
-                .font(.caption2)
-                .foregroundStyle(.gray)
-                .frame(maxWidth: .infinity, alignment: .center)
+            // (연속 사용일·누적 업적 통계는 도감 탭 헤더로 이동)
 
             // 주인 프로필 — 대사 호칭/개인화에 사용
             Text("주인 프로필 (대사 호칭에 사용)")
