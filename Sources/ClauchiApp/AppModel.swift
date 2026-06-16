@@ -88,9 +88,20 @@ final class AppModel {
     }
 
     private func startTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+        // .common 모드로 등록 — 패널 스크롤/클릭 추적(eventTracking) 중에도 0.5초 틱이
+        // 멈추지 않게 한다. scheduledTimer(.default)는 상호작용 중 갱신이 멈춰 stat이 늦게 뜬다.
+        let tickTimer = Timer(timeInterval: 0.5, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.tickNow() }
         }
+        RunLoop.main.add(tickTimer, forMode: .common)
+        timer = tickTimer
+    }
+
+    // 액션 직후 즉시 UI 갱신 — visualState/frameIndex는 관찰 대상이라 재렌더를 강제한다.
+    // 엔진 상태(포만감/기분/EXP)는 @Observable이 아니라 이 신호 없이는 다음 틱(최대 0.5초)까지 안 뜬다.
+    private func refreshUI() {
+        visualState = engine.visualState(now: clock.now())
+        frameIndex += 1
     }
 
     // 6시간마다 업데이트 확인 (스펙 §4.4)
@@ -155,11 +166,13 @@ final class AppModel {
     // 쓰다듬기 — 패널의 펫 클릭 (스펙 §5)
     func petPet() {
         process(engine.petPet(now: clock.now()))
+        refreshUI()
     }
 
     // 수동 밥주기 — 패널의 밥 주기 버튼
     func manualFeed() {
         process(engine.manualFeed(now: clock.now()))
+        refreshUI()
         saveNow()
     }
 
@@ -257,18 +270,21 @@ final class AppModel {
     // 리세마라 — 알/아기 단계에서 새 알 다시 뽑기 (스펙 §5)
     func reroll() {
         process(engine.reroll(now: clock.now()))
+        refreshUI()
         saveNow()
     }
 
     // 조기 졸업 — Lv.rerollLockLevel 이상에서 도감에 졸업 기록을 남기고 새 알 (스펙 2026-06-16)
     func graduateEarly() {
         process(engine.graduateEarly(now: clock.now()))
+        refreshUI()
         saveNow()
     }
 
     // 이름 변경 — 엔진 검증(트림·12자) 후 즉시 저장
     func renamePet(_ name: String) {
         engine.renamePet(name)
+        refreshUI()
         saveNow()
     }
 }
