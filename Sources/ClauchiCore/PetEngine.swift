@@ -8,7 +8,7 @@ public enum DialogueSituation: String, Equatable, Sendable, CaseIterable {
     case greeting, returnGreeting, levelUp, hatched, evolvedToAdult, graduated, died
     case hungryWarning, criticalWarning, permissionWaiting, longWorkBreak
     case randomChatter, vacationReturn, petted, rerolled, promptReaction
-    case manualFed, talked, streakMilestone, lateNightWork
+    case manualFed, talked, streakMilestone, lateNightWork, weekendWork
 }
 
 public enum EngineOutput: Equatable, Sendable {
@@ -131,9 +131,11 @@ public final class PetEngine {
             if updateStreak(now: now) {
                 outputs.append(.speak(.streakMilestone))
             }
-            // 심야 시간대면 일반 인사 대신 밤샘 걱정 인사
+            // 심야 > 주말 > 일반 인사 순으로 한 가지 인사만 선택
             if config.lateNightHours.contains(calendar.component(.hour, from: now)) {
                 outputs.append(.speak(.lateNightWork))
+            } else if config.weekendWeekdays.contains(calendar.component(.weekday, from: now)) {
+                outputs.append(.speak(.weekendWork))
             } else if let last = state.lastActivityAt {
                 let gap = now.timeIntervalSince(last)
                 if gap >= config.returnGreetingAfterSeconds {

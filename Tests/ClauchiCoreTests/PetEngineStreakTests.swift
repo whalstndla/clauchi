@@ -73,3 +73,18 @@ private let oneDay: TimeInterval = 24 * 3600
     let outputs = engine.handle(sessionStart(at: TestSupport.weekday9am))  // 09:00
     #expect(!outputs.contains(.speak(.lateNightWork)))
 }
+
+// 주말(토/일) 세션 시작은 일반 인사 대신 주말 인사 (weekday9am=수요일 기준 +3일=토요일)
+@Test func weekendSessionGreetsWithWeekendLine() {
+    let engine = TestSupport.makeEngine()
+    let saturday = TestSupport.weekday9am.addingTimeInterval(3 * oneDay)   // 수 +3 = 토 09:00 UTC
+    let outputs = engine.handle(sessionStart(at: saturday))
+    #expect(outputs.contains(.speak(.weekendWork)))
+    #expect(!outputs.contains(.speak(.greeting)))
+}
+
+@Test func weekdaySessionDoesNotTriggerWeekend() {
+    let engine = TestSupport.makeEngine()
+    let outputs = engine.handle(sessionStart(at: TestSupport.weekday9am))  // 수요일
+    #expect(!outputs.contains(.speak(.weekendWork)))
+}

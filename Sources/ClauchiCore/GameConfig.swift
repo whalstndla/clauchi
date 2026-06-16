@@ -47,6 +47,9 @@ public struct GameConfig: Codable, Equatable, Sendable {
     // 심야(밤샘) 시간대 — 이 시각에 세션을 시작하면 걱정하는 인사 (로컬 시 기준)
     public var lateNightHours: Set<Int> = [0, 1, 2, 3, 4]
 
+    // 주말 요일(그레고리력: 일=1, 토=7) — 주말 세션 시작 시 전용 인사
+    public var weekendWeekdays: Set<Int> = [1, 7]
+
     public static let `default` = GameConfig()
     public init() {}
 

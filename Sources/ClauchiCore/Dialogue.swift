@@ -134,6 +134,9 @@ public struct TemplateDialogueProvider: DialogueProviding {
         case .lateNightWork:
             ["이 시간까지 코딩이라니... 몸 챙겨!", "{owner}, 밤샘은 적당히! 🌙",
              "늦었어~ 무리하지 말고 곧 자자!"]
+        case .weekendWork:
+            ["주말에도 코딩이라니, 열정 가득! ", "{owner}, 주말엔 좀 쉬어도 돼~",
+             "주말 출근(?) 환영! 같이 달려보자"]
         }
     }
 }
