@@ -90,6 +90,13 @@ struct SettingsView: View {
                 model.refreshDialogueProvider()
             }
 
+            SettingSwitchRow(label: "💬 랜덤 잡담",
+                             isOn: settings.randomChatterEnabled) { enabled in
+                var updated = model.settings
+                updated.randomChatterEnabled = enabled
+                model.applySettings(updated)
+            }
+
             SettingSwitchRow(label: "로그인 시 자동 시작",
                              isOn: settings.launchAtLogin) { enabled in
                 var updated = model.settings

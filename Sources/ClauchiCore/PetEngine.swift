@@ -376,8 +376,9 @@ public final class PetEngine {
             }
         }
 
-        // 랜덤 잡담 — 쿨다운 후 평균 10분 내 발화 (휴가/알 제외)
-        if !state.settings.vacationMode && state.pet.stage != .egg {
+        // 랜덤 잡담 — 쿨다운 후 평균 10분 내 발화 (설정 off/휴가/알 제외)
+        if state.settings.randomChatterEnabled && !state.settings.vacationMode
+            && state.pet.stage != .egg {
             let cooldownOver = state.lastChatterAt
                 .map { now.timeIntervalSince($0) >= config.chatterCooldownSeconds } ?? true
             if cooldownOver && random() < delta / 600 {

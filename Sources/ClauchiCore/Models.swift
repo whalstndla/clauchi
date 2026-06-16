@@ -115,20 +115,22 @@ public struct GameSettings: Codable, Equatable, Sendable {
     public var launchAtLogin: Bool
     public var ownerName: String        // 빈 문자열이면 성별 기반 기본 호칭 사용
     public var ownerGender: OwnerGender
+    public var randomChatterEnabled: Bool   // 심심할 때 거는 랜덤 잡담 on/off
     public init(restWeekdays: Set<Int>, vacationMode: Bool, dialogueAIEnabled: Bool,
                 launchAtLogin: Bool, ownerName: String = "",
-                ownerGender: OwnerGender = .unspecified) {
+                ownerGender: OwnerGender = .unspecified, randomChatterEnabled: Bool = true) {
         self.restWeekdays = restWeekdays; self.vacationMode = vacationMode
         self.dialogueAIEnabled = dialogueAIEnabled; self.launchAtLogin = launchAtLogin
         self.ownerName = ownerName; self.ownerGender = ownerGender
+        self.randomChatterEnabled = randomChatterEnabled
     }
 
     enum CodingKeys: String, CodingKey {
         case restWeekdays, vacationMode, dialogueAIEnabled, launchAtLogin
-        case ownerName, ownerGender
+        case ownerName, ownerGender, randomChatterEnabled
     }
 
-    // ownerName/ownerGender 없는 구버전 세이브 마이그레이션 — 기본값으로
+    // 구버전 세이브 마이그레이션 — 없는 필드는 기본값으로
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         restWeekdays = try container.decode(Set<Int>.self, forKey: .restWeekdays)
@@ -138,6 +140,8 @@ public struct GameSettings: Codable, Equatable, Sendable {
         ownerName = try container.decodeIfPresent(String.self, forKey: .ownerName) ?? ""
         ownerGender = try container.decodeIfPresent(OwnerGender.self, forKey: .ownerGender)
             ?? .unspecified
+        randomChatterEnabled = try container.decodeIfPresent(
+            Bool.self, forKey: .randomChatterEnabled) ?? true
     }
 
     public static let `default` = GameSettings(
