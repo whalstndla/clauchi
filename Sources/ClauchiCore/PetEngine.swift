@@ -106,6 +106,14 @@ public final class PetEngine {
         return graduate(now: now)
     }
 
+    // 펫 일지에 하이라이트 한 줄 기록 — 상한 초과 시 오래된 것부터 버린다
+    private func logEvent(_ text: String, now: Date) {
+        state.petLog.append(PetLogEntry(date: now, text: text))
+        if state.petLog.count > config.petLogMaxEntries {
+            state.petLog.removeFirst(state.petLog.count - config.petLogMaxEntries)
+        }
+    }
+
     // 연속 사용일(스트릭) 갱신 — 같은 날 재호출은 무시, 다음 날이면 +1, 하루 이상 비면 1로 리셋.
     // 마일스톤(GameConfig.streakMilestones)에 새로 도달하면 true 반환 → 축하 대사 트리거.
     private func updateStreak(now: Date) -> Bool {
@@ -141,6 +149,7 @@ public final class PetEngine {
         case .sessionStart:
             if updateStreak(now: now) {
                 outputs.append(.speak(.streakMilestone))
+                logEvent("\(state.streakDays)일 연속 사용 달성 🔥", now: now)
             }
             // 심야 > 주말 > 일반 인사 순으로 한 가지 인사만 선택
             if config.lateNightHours.contains(calendar.component(.hour, from: now)) {
@@ -166,6 +175,7 @@ public final class PetEngine {
             updateTodayStops(now: now)
             if config.workMilestones.contains(state.lifetimeStops) {
                 outputs.append(.speak(.workMilestone))
+                logEvent("누적 작업 \(state.lifetimeStops)회 달성 🎉", now: now)
             }
             outputs.append(contentsOf: applyFeeding(now: now))
         case .notification:
@@ -282,6 +292,7 @@ public final class PetEngine {
                 state.pet.mood = min(100, state.pet.mood + config.moodPerStageChange)
                 outputs.append(.hatched(state.pet.species))
                 outputs.append(.speak(.hatched))
+                logEvent("부화 — \(state.pet.species.koreanName) 탄생 🐣", now: now)
             }
         case .baby, .adult:
             while state.pet.exp >= config.expToNextLevel(from: state.pet.level) {
@@ -294,6 +305,7 @@ public final class PetEngine {
                     state.pet.stage = .adult
                     state.pet.mood = min(100, state.pet.mood + config.moodPerStageChange)
                     outputs.append(.speak(.evolvedToAdult))
+                    logEvent("성체로 성장 (Lv.\(state.pet.level)) 🌟", now: now)
                 }
                 if state.pet.stage == .adult && state.pet.level >= config.graduateLevel {
                     outputs.append(contentsOf: graduate(now: now))
@@ -311,6 +323,7 @@ public final class PetEngine {
                                       customName: state.pet.customName,
                                       personality: state.pet.personality)
         state.collection.append(record)
+        logEvent("졸업 🎓 \(record.species.koreanName) Lv.\(record.finalLevel)", now: now)
         state.pet = Self.newEgg(collection: state.collection, pool: hatchPool,
                                 now: now, random: random)
         hungryWarned = false
@@ -328,6 +341,7 @@ public final class PetEngine {
                                       customName: state.pet.customName,
                                       personality: state.pet.personality)
         state.collection.append(record)
+        logEvent("사망 🪦 \(record.species.koreanName) Lv.\(record.finalLevel)", now: now)
         state.pet = Self.newEgg(collection: state.collection, pool: hatchPool,
                                 now: now, random: random)
         hungryWarned = false

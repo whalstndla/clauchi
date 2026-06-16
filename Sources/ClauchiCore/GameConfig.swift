@@ -53,6 +53,9 @@ public struct GameConfig: Codable, Equatable, Sendable {
     // 누적 작업(Stop) 마일스톤 — 이 횟수에 도달하면 축하 대사
     public var workMilestones: Set<Int> = [100, 500, 1000, 5000, 10000]
 
+    // 펫 일지 최대 보관 항목 수 — 초과 시 오래된 것부터 버린다
+    public var petLogMaxEntries: Int = 50
+
     public static let `default` = GameConfig()
     public init() {}
 

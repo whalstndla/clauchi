@@ -149,6 +149,13 @@ public struct GameSettings: Codable, Equatable, Sendable {
         launchAtLogin: false, ownerName: "", ownerGender: .unspecified)
 }
 
+// 펫 생애 하이라이트 한 줄 — 부화/성체/졸업/사망/마일스톤 등
+public struct PetLogEntry: Codable, Equatable, Sendable {
+    public var date: Date
+    public var text: String
+    public init(date: Date, text: String) { self.date = date; self.text = text }
+}
+
 public struct GameState: Codable, Equatable, Sendable {
     public var version: Int
     public var pet: PetState
@@ -165,12 +172,13 @@ public struct GameState: Codable, Equatable, Sendable {
     public var lifetimePets: Int             // 누적 쓰다듬기 횟수
     public var todayStops: Int               // 오늘 작업(Stop) 횟수 — 날짜가 바뀌면 0으로 리셋
     public var todayStopsDay: Date?          // todayStops가 집계 중인 '날'(startOfDay)
+    public var petLog: [PetLogEntry]         // 펫 생애 하이라이트 로그(최신이 뒤, 상한 적용)
     public init(version: Int, pet: PetState, collection: [CollectionRecord],
                 settings: GameSettings, eventLogOffset: UInt64,
                 lastChatterAt: Date?, lastActivityAt: Date?, continuousWorkStartedAt: Date?,
                 streakDays: Int = 0, lastStreakDay: Date? = nil,
                 lifetimeStops: Int = 0, lifetimeManualFeeds: Int = 0, lifetimePets: Int = 0,
-                todayStops: Int = 0, todayStopsDay: Date? = nil) {
+                todayStops: Int = 0, todayStopsDay: Date? = nil, petLog: [PetLogEntry] = []) {
         self.version = version; self.pet = pet; self.collection = collection
         self.settings = settings; self.eventLogOffset = eventLogOffset
         self.lastChatterAt = lastChatterAt; self.lastActivityAt = lastActivityAt
@@ -179,13 +187,14 @@ public struct GameState: Codable, Equatable, Sendable {
         self.lifetimeStops = lifetimeStops; self.lifetimeManualFeeds = lifetimeManualFeeds
         self.lifetimePets = lifetimePets
         self.todayStops = todayStops; self.todayStopsDay = todayStopsDay
+        self.petLog = petLog
     }
 
     enum CodingKeys: String, CodingKey {
         case version, pet, collection, settings, eventLogOffset
         case lastChatterAt, lastActivityAt, continuousWorkStartedAt
         case streakDays, lastStreakDay, lifetimeStops, lifetimeManualFeeds, lifetimePets
-        case todayStops, todayStopsDay
+        case todayStops, todayStopsDay, petLog
     }
 
     // 신규 필드(streak/lifetime)가 없는 구버전 세이브 마이그레이션 — 기본 0 / nil
@@ -206,6 +215,7 @@ public struct GameState: Codable, Equatable, Sendable {
         lifetimePets = try container.decodeIfPresent(Int.self, forKey: .lifetimePets) ?? 0
         todayStops = try container.decodeIfPresent(Int.self, forKey: .todayStops) ?? 0
         todayStopsDay = try container.decodeIfPresent(Date.self, forKey: .todayStopsDay)
+        petLog = try container.decodeIfPresent([PetLogEntry].self, forKey: .petLog) ?? []
     }
 }
 
