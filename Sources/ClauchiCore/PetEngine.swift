@@ -221,6 +221,7 @@ public final class PetEngine {
     // 쓰다듬기 — 패널의 펫 클릭 (스펙 §5). 알은 반응하지 않는다
     public func petPet(now: Date) -> [EngineOutput] {
         guard state.pet.stage != .egg else { return [] }
+        state.lifetimePets += 1
         recentMoodGains.removeAll { now.timeIntervalSince($0.at) >= 60 }
         let gainedLastMinute = recentMoodGains.reduce(0) { $0 + $1.amount }
         let allowed = max(0, config.moodGainCapPerMinute - gainedLastMinute)

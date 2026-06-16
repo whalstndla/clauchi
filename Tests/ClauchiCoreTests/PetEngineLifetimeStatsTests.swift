@@ -32,3 +32,17 @@ import Testing
     _ = engine.manualFeed(now: TestSupport.weekday9am)
     #expect(engine.state.lifetimeManualFeeds == 0)
 }
+
+@Test func petPetIncrementsLifetimePets() {
+    let engine = TestSupport.makeEngine(state: TestSupport.makeState(mood: 50))
+    let t = TestSupport.weekday9am
+    _ = engine.petPet(now: t)
+    _ = engine.petPet(now: t.addingTimeInterval(1))
+    #expect(engine.state.lifetimePets == 2)
+}
+
+@Test func eggPetPetDoesNotCount() {
+    let engine = TestSupport.makeEngine(state: TestSupport.makeState(stage: .egg, level: 0))
+    _ = engine.petPet(now: TestSupport.weekday9am)
+    #expect(engine.state.lifetimePets == 0)
+}

@@ -19,6 +19,7 @@ struct SettingsView: View {
         let streakDays = model.engine.state.streakDays
         let lifetimeStops = model.engine.state.lifetimeStops
         let lifetimeManualFeeds = model.engine.state.lifetimeManualFeeds
+        let lifetimePets = model.engine.state.lifetimePets
         VStack(alignment: .leading, spacing: 12) {
             // 연속 사용일(스트릭) — 0일이면 숨김
             if streakDays > 0 {
@@ -28,7 +29,7 @@ struct SettingsView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
             }
             // 누적 업적 — 작업/급식 횟수
-            Text("⌨️ 누적 작업 \(lifetimeStops)회 · 🍚 급식 \(lifetimeManualFeeds)회")
+            Text("⌨️ 작업 \(lifetimeStops) · 🍚 급식 \(lifetimeManualFeeds) · 🤚 쓰담 \(lifetimePets)")
                 .font(.caption2)
                 .foregroundStyle(.gray)
                 .frame(maxWidth: .infinity, alignment: .center)
