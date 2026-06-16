@@ -137,11 +137,14 @@ struct ExpandedPanelView: View {
                 isNameFieldFocused = false
             }
 
-            // 성격 — 알 단계에서는 숨김(부화 시 공개) (스펙 §7.1)
+            // 성격 + 종합 컨디션 — 알 단계에서는 숨김(부화 시 공개) (스펙 §7.1)
             if pet.stage != .egg {
                 Text("성격 · \(pet.personality.koreanName)")
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .foregroundStyle(CuteTheme.cream.opacity(0.7))
+                Text(PetCondition.label(satiety: pet.satiety, mood: pet.mood))
+                    .font(.system(size: 10, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.6))
             }
 
             VStack(spacing: 7) {
