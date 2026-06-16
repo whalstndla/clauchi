@@ -40,22 +40,31 @@ private struct CollectionGridView: View {
                 .font(.system(size: 12, weight: .bold, design: .rounded))
                 .foregroundStyle(CuteTheme.cream)
                 .frame(maxWidth: .infinity, alignment: .center)
+                .help("칭호 — 누적 작업량이 쌓일수록 올라가요 (새내기→코딩 마스터)")
 
             // 통계 헤더 — 완성률 · 총 생존일수 · 총 사망
             HStack(spacing: 12) {
-                statBadge("⭐", "\(stats.completedSpecies)/\(stats.totalSpecies)")
-                statBadge("📅", "\(stats.totalDaysLived)일")
-                statBadge("🪦", "\(stats.totalDeaths)")
+                statBadge("⭐", "\(stats.completedSpecies)/\(stats.totalSpecies)",
+                          "도감 완성 — 졸업시킨 종 수 / 전체 12종")
+                statBadge("📅", "\(stats.totalDaysLived)일",
+                          "역대 펫들의 총 생존일수 합계")
+                statBadge("🪦", "\(stats.totalDeaths)",
+                          "굶어서 사망한 펫 수")
             }
             // 누적 업적 — 좁은 패널 폭에 맞춰 3 + 2 두 행으로 분리(가로 오버플로 방지)
             HStack(spacing: 8) {
-                statBadge("🔥", "\(gameState.streakDays)일")
-                statBadge("📆", "오늘 \(gameState.todayStops)")
-                statBadge("⌨️", "\(gameState.lifetimeStops)")
+                statBadge("🔥", "\(gameState.streakDays)일",
+                          "연속 사용일 — Claude를 며칠 연속 썼는지(하루 쉬면 초기화)")
+                statBadge("📆", "오늘 \(gameState.todayStops)",
+                          "오늘 한 작업(Stop) 수 — 자정에 초기화")
+                statBadge("⌨️", "\(gameState.lifetimeStops)",
+                          "누적 작업(Stop) 수 — 지금까지 전부")
             }
             HStack(spacing: 8) {
-                statBadge("🍚", "\(gameState.lifetimeManualFeeds)")
-                statBadge("🤚", "\(gameState.lifetimePets)")
+                statBadge("🍚", "\(gameState.lifetimeManualFeeds)",
+                          "누적 수동 급식 횟수 (밥 주기 버튼)")
+                statBadge("🤚", "\(gameState.lifetimePets)",
+                          "누적 쓰다듬기 횟수")
             }
 
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 10) {
@@ -81,7 +90,7 @@ private struct CollectionGridView: View {
         }
     }
 
-    private func statBadge(_ icon: String, _ value: String) -> some View {
+    private func statBadge(_ icon: String, _ value: String, _ help: String) -> some View {
         HStack(spacing: 3) {
             Text(icon).font(.system(size: 11))
             Text(value)
@@ -91,6 +100,7 @@ private struct CollectionGridView: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(Capsule().fill(CuteTheme.slot.opacity(0.6)))
+        .help(help)   // 마우스 오버 시 설명 툴팁
     }
 
     @ViewBuilder
