@@ -47,11 +47,13 @@ private struct CollectionGridView: View {
                 statBadge("📅", "\(stats.totalDaysLived)일")
                 statBadge("🪦", "\(stats.totalDeaths)")
             }
-            // 누적 업적 — 연속 사용일 · 오늘/누적 작업 · 급식 · 쓰다듬기
+            // 누적 업적 — 좁은 패널 폭에 맞춰 3 + 2 두 행으로 분리(가로 오버플로 방지)
             HStack(spacing: 8) {
                 statBadge("🔥", "\(gameState.streakDays)일")
                 statBadge("📆", "오늘 \(gameState.todayStops)")
                 statBadge("⌨️", "\(gameState.lifetimeStops)")
+            }
+            HStack(spacing: 8) {
                 statBadge("🍚", "\(gameState.lifetimeManualFeeds)")
                 statBadge("🤚", "\(gameState.lifetimePets)")
             }
