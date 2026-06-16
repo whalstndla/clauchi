@@ -156,24 +156,28 @@ public struct GameState: Codable, Equatable, Sendable {
     public var continuousWorkStartedAt: Date?
     public var streakDays: Int               // 연속 사용일 (스트릭) — 활동 없는 날이 끼면 1로 리셋
     public var lastStreakDay: Date?          // 스트릭에 마지막으로 반영된 '날'(startOfDay)
+    public var lifetimeStops: Int            // 누적 작업(Stop) 횟수 — 펫을 넘어 영구 집계
+    public var lifetimeManualFeeds: Int      // 누적 수동 급식 횟수
     public init(version: Int, pet: PetState, collection: [CollectionRecord],
                 settings: GameSettings, eventLogOffset: UInt64,
                 lastChatterAt: Date?, lastActivityAt: Date?, continuousWorkStartedAt: Date?,
-                streakDays: Int = 0, lastStreakDay: Date? = nil) {
+                streakDays: Int = 0, lastStreakDay: Date? = nil,
+                lifetimeStops: Int = 0, lifetimeManualFeeds: Int = 0) {
         self.version = version; self.pet = pet; self.collection = collection
         self.settings = settings; self.eventLogOffset = eventLogOffset
         self.lastChatterAt = lastChatterAt; self.lastActivityAt = lastActivityAt
         self.continuousWorkStartedAt = continuousWorkStartedAt
         self.streakDays = streakDays; self.lastStreakDay = lastStreakDay
+        self.lifetimeStops = lifetimeStops; self.lifetimeManualFeeds = lifetimeManualFeeds
     }
 
     enum CodingKeys: String, CodingKey {
         case version, pet, collection, settings, eventLogOffset
         case lastChatterAt, lastActivityAt, continuousWorkStartedAt
-        case streakDays, lastStreakDay
+        case streakDays, lastStreakDay, lifetimeStops, lifetimeManualFeeds
     }
 
-    // streakDays/lastStreakDay가 없는 구버전 세이브 마이그레이션 — 기본 0 / nil
+    // 신규 필드(streak/lifetime)가 없는 구버전 세이브 마이그레이션 — 기본 0 / nil
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         version = try container.decode(Int.self, forKey: .version)
@@ -186,6 +190,8 @@ public struct GameState: Codable, Equatable, Sendable {
         continuousWorkStartedAt = try container.decodeIfPresent(Date.self, forKey: .continuousWorkStartedAt)
         streakDays = try container.decodeIfPresent(Int.self, forKey: .streakDays) ?? 0
         lastStreakDay = try container.decodeIfPresent(Date.self, forKey: .lastStreakDay)
+        lifetimeStops = try container.decodeIfPresent(Int.self, forKey: .lifetimeStops) ?? 0
+        lifetimeManualFeeds = try container.decodeIfPresent(Int.self, forKey: .lifetimeManualFeeds) ?? 0
     }
 }
 

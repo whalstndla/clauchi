@@ -149,6 +149,7 @@ public final class PetEngine {
             if state.continuousWorkStartedAt == nil { state.continuousWorkStartedAt = now }
             outputs.append(contentsOf: applyToolUseFeeding(now: now))
         case .stop:
+            state.lifetimeStops += 1
             outputs.append(contentsOf: applyFeeding(now: now))
         case .notification:
             let cooldownOver = lastNotificationSpokeAt
@@ -237,6 +238,7 @@ public final class PetEngine {
         if let last = lastManualFeedAt,
            now.timeIntervalSince(last) < config.manualFeedCooldownSeconds { return [] }
         lastManualFeedAt = now
+        state.lifetimeManualFeeds += 1
         state.pet.satiety = min(100, state.pet.satiety + config.satietyPerManualFeed)
         state.pet.criticalAccumulatedSeconds = 0
         if state.pet.satiety > config.hungryThreshold { hungryWarned = false }
