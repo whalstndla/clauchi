@@ -41,6 +41,9 @@ public struct GameConfig: Codable, Equatable, Sendable {
     public var moodSadThreshold: Double = 25          // 이하면 시무룩 표정
     public var happyExpBonusPerStop: Int = 1
 
+    // 연속 사용일(스트릭) 마일스톤 — 이 일수에 도달하면 축하 대사 (스펙 §5 확장 2026-06-16)
+    public var streakMilestones: [Int] = [3, 7, 14, 30, 50, 100]
+
     public static let `default` = GameConfig()
     public init() {}
 

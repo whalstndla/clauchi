@@ -154,13 +154,38 @@ public struct GameState: Codable, Equatable, Sendable {
     public var lastChatterAt: Date?
     public var lastActivityAt: Date?
     public var continuousWorkStartedAt: Date?
+    public var streakDays: Int               // 연속 사용일 (스트릭) — 활동 없는 날이 끼면 1로 리셋
+    public var lastStreakDay: Date?          // 스트릭에 마지막으로 반영된 '날'(startOfDay)
     public init(version: Int, pet: PetState, collection: [CollectionRecord],
                 settings: GameSettings, eventLogOffset: UInt64,
-                lastChatterAt: Date?, lastActivityAt: Date?, continuousWorkStartedAt: Date?) {
+                lastChatterAt: Date?, lastActivityAt: Date?, continuousWorkStartedAt: Date?,
+                streakDays: Int = 0, lastStreakDay: Date? = nil) {
         self.version = version; self.pet = pet; self.collection = collection
         self.settings = settings; self.eventLogOffset = eventLogOffset
         self.lastChatterAt = lastChatterAt; self.lastActivityAt = lastActivityAt
         self.continuousWorkStartedAt = continuousWorkStartedAt
+        self.streakDays = streakDays; self.lastStreakDay = lastStreakDay
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case version, pet, collection, settings, eventLogOffset
+        case lastChatterAt, lastActivityAt, continuousWorkStartedAt
+        case streakDays, lastStreakDay
+    }
+
+    // streakDays/lastStreakDay가 없는 구버전 세이브 마이그레이션 — 기본 0 / nil
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        version = try container.decode(Int.self, forKey: .version)
+        pet = try container.decode(PetState.self, forKey: .pet)
+        collection = try container.decode([CollectionRecord].self, forKey: .collection)
+        settings = try container.decode(GameSettings.self, forKey: .settings)
+        eventLogOffset = try container.decode(UInt64.self, forKey: .eventLogOffset)
+        lastChatterAt = try container.decodeIfPresent(Date.self, forKey: .lastChatterAt)
+        lastActivityAt = try container.decodeIfPresent(Date.self, forKey: .lastActivityAt)
+        continuousWorkStartedAt = try container.decodeIfPresent(Date.self, forKey: .continuousWorkStartedAt)
+        streakDays = try container.decodeIfPresent(Int.self, forKey: .streakDays) ?? 0
+        lastStreakDay = try container.decodeIfPresent(Date.self, forKey: .lastStreakDay)
     }
 }
 

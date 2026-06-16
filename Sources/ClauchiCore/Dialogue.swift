@@ -124,6 +124,9 @@ public struct TemplateDialogueProvider: DialogueProviding {
         case .talked:
             ["그거 재밌는 얘기다!", "헤헤, 그렇구나!", "나도 그 생각 했어!",
              "주인이 말 걸어줘서 기뻐!", "오~ 그런 일이 있었어?"]
+        case .streakMilestone:
+            ["며칠째 함께라니! 최고야 🔥", "연속 출석 대단해! 이 기세로 가자!",
+             "{owner}, 우리 꾸준함 좀 봐! 🔥"]
         }
     }
 }

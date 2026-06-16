@@ -8,7 +8,7 @@ public enum DialogueSituation: String, Equatable, Sendable, CaseIterable {
     case greeting, returnGreeting, levelUp, hatched, evolvedToAdult, graduated, died
     case hungryWarning, criticalWarning, permissionWaiting, longWorkBreak
     case randomChatter, vacationReturn, petted, rerolled, promptReaction
-    case manualFed, talked
+    case manualFed, talked, streakMilestone
 }
 
 public enum EngineOutput: Equatable, Sendable {
@@ -106,11 +106,31 @@ public final class PetEngine {
         return graduate(now: now)
     }
 
+    // 연속 사용일(스트릭) 갱신 — 같은 날 재호출은 무시, 다음 날이면 +1, 하루 이상 비면 1로 리셋.
+    // 마일스톤(GameConfig.streakMilestones)에 새로 도달하면 true 반환 → 축하 대사 트리거.
+    private func updateStreak(now: Date) -> Bool {
+        let today = calendar.startOfDay(for: now)
+        guard let lastDay = state.lastStreakDay else {
+            state.streakDays = 1
+            state.lastStreakDay = today
+            return config.streakMilestones.contains(1)
+        }
+        let lastStart = calendar.startOfDay(for: lastDay)
+        let dayGap = calendar.dateComponents([.day], from: lastStart, to: today).day ?? 0
+        if dayGap <= 0 { return false }            // 같은 날(또는 과거) — 변화 없음
+        state.streakDays = dayGap == 1 ? state.streakDays + 1 : 1   // 연속이면 +1, 끊겼으면 리셋
+        state.lastStreakDay = today
+        return config.streakMilestones.contains(state.streakDays)
+    }
+
     public func handle(_ event: ClaudeEvent) -> [EngineOutput] {
         var outputs: [EngineOutput] = []
         let now = event.ts
         switch event.event {
         case .sessionStart:
+            if updateStreak(now: now) {
+                outputs.append(.speak(.streakMilestone))
+            }
             if let last = state.lastActivityAt {
                 let gap = now.timeIntervalSince(last)
                 if gap >= config.returnGreetingAfterSeconds {
