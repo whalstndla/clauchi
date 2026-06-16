@@ -171,21 +171,19 @@ private struct CollectionDetailView: View {
             .frame(maxWidth: .infinity)
             .background(RoundedRectangle(cornerRadius: 12).fill(CuteTheme.slot.opacity(0.6)))
 
-            // 기록 리스트 (현재 카드 + 생애 기록)
-            ScrollView {
-                VStack(spacing: 6) {
-                    if isCurrent {
-                        currentCard(pet: pet)
-                    }
-                    ForEach(records.indices, id: \.self) { index in
-                        recordRow(records[index])
-                    }
-                    if records.isEmpty && !isCurrent {
-                        Text("아직 생애 기록이 없어요")
-                            .font(.system(size: 10, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.4))
-                            .padding(.vertical, 8)
-                    }
+            // 기록 리스트 (현재 카드 + 생애 기록) — 스크롤은 패널 외부 ScrollView가 담당
+            VStack(spacing: 6) {
+                if isCurrent {
+                    currentCard(pet: pet)
+                }
+                ForEach(records.indices, id: \.self) { index in
+                    recordRow(records[index])
+                }
+                if records.isEmpty && !isCurrent {
+                    Text("아직 생애 기록이 없어요")
+                        .font(.system(size: 10, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.4))
+                        .padding(.vertical, 8)
                 }
             }
         }
