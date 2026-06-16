@@ -10,11 +10,17 @@ struct ExpandedPanelView: View {
     @FocusState private var isNameFieldFocused: Bool
     @State private var chatInput = ""           // 말걸기 입력
     @FocusState private var isChatFieldFocused: Bool
+    @State private var showPetLog = false        // 펫 일지 모달
 
     private let tabs = ["🐾 펫", "📒 도감", "⚙️ 설정"]
 
     var body: some View {
-        VStack(spacing: 12) {
+        Group {
+          if showPetLog {
+            ScrollView { PetLogView(model: model) { showPetLog = false } }
+                .scrollIndicators(.hidden)
+          } else {
+            VStack(spacing: 12) {
             // 탭 — 비활성 창에서도 색이 살아있는 커스텀 칩
             HStack(spacing: 6) {
                 ForEach(tabs.indices, id: \.self) { index in
@@ -43,6 +49,8 @@ struct ExpandedPanelView: View {
                 }
             }
             .scrollIndicators(.hidden)
+            }
+          }
         }
         .padding(16)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -127,6 +135,9 @@ struct ExpandedPanelView: View {
                     }
                     .buttonStyle(.plain)
                     .font(.system(size: 11))
+                    Button("📖") { showPetLog = true }   // 펫 일지 열기
+                        .buttonStyle(.plain)
+                        .font(.system(size: 11))
                 }
             }
             // 패널 열린 채 리세마라/부화로 펫이 바뀌면 이전 펫 기준 편집 상태를 정리한다
