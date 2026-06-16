@@ -243,11 +243,19 @@ final class AppModel {
                              species: record.species, stage: .adult)
     }
 
+    private var lastDialogueText: String?   // 직전 토스트 대사 — 연속 중복 방지용
+
     private func enqueueDialogueToast(context: DialogueContext, expression: ClauchiCore.Expression,
                                       species: Species, stage: Stage) {
         let provider = dialogueProvider
         Task { @MainActor in
-            let text = await provider.line(for: context)
+            var text = await provider.line(for: context)
+            // 직전과 같은 대사면 한 번 더 뽑아 연속 중복을 줄인다
+            if text == lastDialogueText {
+                let retry = await provider.line(for: context)
+                if !retry.isEmpty { text = retry }
+            }
+            lastDialogueText = text
             toastPresenter.enqueue(ToastPresenter.Toast(
                 text: text, expression: expression, species: species, stage: stage))
         }
