@@ -2,6 +2,20 @@ import Foundation
 
 public enum Expression: String, CaseIterable, Sendable { case happy, sad, critical }
 
+extension Expression {
+    // 패널 큰 스프라이트 표정 결정 — 위급/배고픔만 명시적 부정 표정,
+    // 그 외(수면·휴식·작업·평상)는 기분 기반(낮으면 슬픔, 아니면 행복).
+    // 수면을 슬픔으로 보지 않는다 — 컨디션 좋은데 자는 펫이 슬퍼 보이던 문제 방지.
+    public static func forState(_ visualState: VisualState,
+                                mood: Double, sadThreshold: Double) -> Expression {
+        switch visualState {
+        case .critical: .critical
+        case .hungry: .sad
+        default: mood <= sadThreshold ? .sad : .happy
+        }
+    }
+}
+
 public struct SpriteSet: Sendable {
     public let small: [VisualState: [PixelGrid]]   // 16×16 상태별 프레임
     public let large: [Expression: PixelGrid]      // 32×32 표정 (토스트·확장 패널)

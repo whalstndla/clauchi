@@ -17,5 +17,5 @@ import Testing
 }
 
 @Test func changelogTopIsCurrentRelease() {
-    #expect(Changelog.entries.first?.version == "0.3.6")
+    #expect(Changelog.entries.first?.version == "0.3.7")
 }

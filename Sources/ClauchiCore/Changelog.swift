@@ -13,6 +13,9 @@ public struct ChangelogEntry: Equatable, Sendable {
 
 public enum Changelog {
     public static let entries: [ChangelogEntry] = [
+        ChangelogEntry(version: "0.3.7", date: "2026.06.16", changes: [
+            "컨디션 좋은데 자는 펫이 슬픈 표정으로 보이던 문제 수정",
+        ]),
         ChangelogEntry(version: "0.3.6", date: "2026.06.16", changes: [
             "도감 통계·칭호 뱃지에 마우스 오버 설명(툴팁) 추가",
         ]),

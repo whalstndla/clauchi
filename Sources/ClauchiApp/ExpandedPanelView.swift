@@ -66,12 +66,8 @@ struct ExpandedPanelView: View {
     private var petTab: some View {
         let pet = model.engine.state.pet
         let config = model.engine.config
-        let expression: ClauchiCore.Expression = switch true {
-        case _ where model.visualState == .critical: .critical
-        case _ where model.visualState == .hungry || model.visualState == .sleeping: .sad
-        case _ where pet.mood <= config.moodSadThreshold: .sad
-        default: .happy
-        }
+        let expression = ClauchiCore.Expression.forState(
+            model.visualState, mood: pet.mood, sadThreshold: config.moodSadThreshold)
 
         return VStack(spacing: 12) {
             // 다마고치 "화면" — 밤하늘 스크린 안에 펫. 클릭하면 쓰다듬기
