@@ -4,7 +4,7 @@ public enum VisualState: String, Equatable, Sendable {
     case egg, idle, working, sleeping, hungry, critical, playing, vacation
 }
 
-public enum DialogueSituation: String, Equatable, Sendable {
+public enum DialogueSituation: String, Equatable, Sendable, CaseIterable {
     case greeting, returnGreeting, levelUp, hatched, evolvedToAdult, graduated, died
     case hungryWarning, criticalWarning, permissionWaiting, longWorkBreak
     case randomChatter, vacationReturn, petted, rerolled, promptReaction
