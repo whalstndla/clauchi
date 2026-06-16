@@ -29,3 +29,15 @@ import Testing
     #expect(engine.state.petLog.count <= engine.config.petLogMaxEntries)
     #expect(engine.state.petLog.last?.text.contains("졸업") == true)   // 최신은 졸업
 }
+
+@Test func roundLevelIsLogged() {
+    // Lv.9 + 큰 EXP → Lv.10 도달 → 일지에 'Lv.10 달성'
+    let engine = TestSupport.makeEngine(
+        state: TestSupport.makeState(satiety: 100, stage: .adult, level: 9, exp: 0))
+    // expToNextLevel(9)=90 만큼 채우면 Lv.10. Stop으로 EXP 누적
+    for i in 0..<30 {
+        _ = engine.handle(TestSupport.stopEvent(at: TestSupport.weekday9am.addingTimeInterval(Double(i) * 60)))
+    }
+    #expect(engine.state.pet.level >= 10)
+    #expect(engine.state.petLog.contains { $0.text.contains("Lv.10 달성") })
+}

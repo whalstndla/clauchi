@@ -301,6 +301,9 @@ public final class PetEngine {
                 state.pet.mood = min(100, state.pet.mood + config.moodPerLevelUp)
                 outputs.append(.leveledUp(state.pet.level))
                 outputs.append(.speak(.levelUp))
+                if state.pet.level % 10 == 0 {   // 10단위 레벨만 일지에 기록(매 레벨은 과함)
+                    logEvent("Lv.\(state.pet.level) 달성 ⬆️", now: now)
+                }
                 if state.pet.stage == .baby && state.pet.level >= config.adultLevel {
                     state.pet.stage = .adult
                     state.pet.mood = min(100, state.pet.mood + config.moodPerStageChange)
