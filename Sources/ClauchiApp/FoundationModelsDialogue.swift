@@ -70,9 +70,12 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
         }
         ownerInfo += context.ownerGender == .unspecified ? "" :
             "주인 성별은 \(context.ownerGender == .male ? "남성" : "여성"). "
+        // 스트릭 마일스톤 상황에선 연속 일수를 프롬프트에 넣어 AI가 숫자를 언급하게 한다
+        let streakInfo = context.situation == .streakMilestone && context.streakDays > 0
+            ? "연속 사용 \(context.streakDays)일째. " : ""
         let base = "너는 \(speech.aiHint) 말투의 \(context.petName)(Lv.\(context.level), " +
                    "포만감 \(context.satiety)/100, 기분 \(context.mood)/100). " +
-                   "성격은 \(context.personality.aiHint). " + ownerInfo
+                   "성격은 \(context.personality.aiHint). " + ownerInfo + streakInfo
         if let userPrompt = context.userPrompt {
             if context.situation == .talked {
                 return base + "주인이 너에게 건넨 말: \"\(Self.sanitizeInput(userPrompt))\". " +

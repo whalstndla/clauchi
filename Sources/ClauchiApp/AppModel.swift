@@ -205,7 +205,8 @@ final class AppModel {
             mood: Int(pet.mood),
             species: pet.species, personality: pet.personality,
             ownerName: engine.state.settings.ownerName,
-            ownerGender: engine.state.settings.ownerGender)
+            ownerGender: engine.state.settings.ownerGender,
+            streakDays: engine.state.streakDays)
         let expression: ClauchiCore.Expression = switch situation {
         case .criticalWarning: .critical
         case .hungryWarning, .longWorkBreak: .sad

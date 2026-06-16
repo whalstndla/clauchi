@@ -13,16 +13,19 @@ public struct DialogueContext: Equatable, Sendable {
     public var personality: Personality
     public var ownerName: String        // 빈 문자열이면 성별 기반 기본 호칭 사용
     public var ownerGender: OwnerGender
+    public var streakDays: Int          // 연속 사용일 — {streak} 치환·마일스톤 대사용
     public init(situation: DialogueSituation, petName: String,
                 stage: Stage, level: Int, satiety: Int, mood: Int = 50,
                 userPrompt: String? = nil,
                 species: Species = .rat, personality: Personality = .cheerful,
-                ownerName: String = "", ownerGender: OwnerGender = .unspecified) {
+                ownerName: String = "", ownerGender: OwnerGender = .unspecified,
+                streakDays: Int = 0) {
         self.situation = situation; self.petName = petName
         self.stage = stage; self.level = level; self.satiety = satiety
         self.mood = mood; self.userPrompt = userPrompt
         self.species = species; self.personality = personality
         self.ownerName = ownerName; self.ownerGender = ownerGender
+        self.streakDays = streakDays
     }
 
     // 호칭 — 이름이 있으면 이름, 없으면 성별 기반 기본 호칭
@@ -49,6 +52,7 @@ public struct TemplateDialogueProvider: DialogueProviding {
             .replacingOccurrences(of: "{name}", with: context.petName)
             .replacingOccurrences(of: "{level}", with: String(context.level))
             .replacingOccurrences(of: "{owner}", with: context.ownerHonorific)
+            .replacingOccurrences(of: "{streak}", with: String(context.streakDays))
         return decorate(base, for: context)
     }
 
@@ -125,8 +129,8 @@ public struct TemplateDialogueProvider: DialogueProviding {
             ["그거 재밌는 얘기다!", "헤헤, 그렇구나!", "나도 그 생각 했어!",
              "주인이 말 걸어줘서 기뻐!", "오~ 그런 일이 있었어?"]
         case .streakMilestone:
-            ["며칠째 함께라니! 최고야 🔥", "연속 출석 대단해! 이 기세로 가자!",
-             "{owner}, 우리 꾸준함 좀 봐! 🔥"]
+            ["{streak}일 연속이라니! 최고야 🔥", "벌써 {streak}일째 함께! 이 기세로 가자!",
+             "{owner}, {streak}일 연속이야! 🔥"]
         case .lateNightWork:
             ["이 시간까지 코딩이라니... 몸 챙겨!", "{owner}, 밤샘은 적당히! 🌙",
              "늦었어~ 무리하지 말고 곧 자자!"]
