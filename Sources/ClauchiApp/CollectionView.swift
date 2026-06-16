@@ -35,6 +35,12 @@ private struct CollectionGridView: View {
         let gameState = model.engine.state
 
         VStack(spacing: 8) {
+            // 칭호 — 누적 작업량 기반
+            Text("🏅 \(PlayerTitle.title(forLifetimeStops: gameState.lifetimeStops))")
+                .font(.system(size: 12, weight: .bold, design: .rounded))
+                .foregroundStyle(CuteTheme.cream)
+                .frame(maxWidth: .infinity, alignment: .center)
+
             // 통계 헤더 — 완성률 · 총 생존일수 · 총 사망
             HStack(spacing: 12) {
                 statBadge("⭐", "\(stats.completedSpecies)/\(stats.totalSpecies)")
