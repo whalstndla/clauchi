@@ -119,6 +119,7 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
         case .streakMilestone: "주인이 여러 날 연속으로 Claude를 써서 함께한 기념일이다. 꾸준함을 축하"
         case .lateNightWork: "주인이 한밤중(새벽)에 작업을 시작했다. 밤샘을 걱정하며 건강을 챙기라고"
         case .weekendWork: "주인이 주말에 작업을 시작했다. 주말에도 일하는 걸 보고 한마디(응원 또는 쉬라고)"
+        case .workMilestone: "주인과 함께한 누적 작업이 큰 숫자에 도달했다. 그동안의 노고를 축하·자랑"
         }
     }
 

@@ -137,6 +137,9 @@ public struct TemplateDialogueProvider: DialogueProviding {
         case .weekendWork:
             ["주말에도 코딩이라니, 열정 가득! ", "{owner}, 주말엔 좀 쉬어도 돼~",
              "주말 출근(?) 환영! 같이 달려보자"]
+        case .workMilestone:
+            ["우리 진짜 많이 일했다! 대단해 🎉", "{owner}, 여기까지 함께라니 뿌듯해!",
+             "엄청난 작업량이야! 자랑스러워 🎉"]
         }
     }
 }

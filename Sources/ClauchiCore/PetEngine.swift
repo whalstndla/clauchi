@@ -8,7 +8,7 @@ public enum DialogueSituation: String, Equatable, Sendable, CaseIterable {
     case greeting, returnGreeting, levelUp, hatched, evolvedToAdult, graduated, died
     case hungryWarning, criticalWarning, permissionWaiting, longWorkBreak
     case randomChatter, vacationReturn, petted, rerolled, promptReaction
-    case manualFed, talked, streakMilestone, lateNightWork, weekendWork
+    case manualFed, talked, streakMilestone, lateNightWork, weekendWork, workMilestone
 }
 
 public enum EngineOutput: Equatable, Sendable {
@@ -152,6 +152,9 @@ public final class PetEngine {
             outputs.append(contentsOf: applyToolUseFeeding(now: now))
         case .stop:
             state.lifetimeStops += 1
+            if config.workMilestones.contains(state.lifetimeStops) {
+                outputs.append(.speak(.workMilestone))
+            }
             outputs.append(contentsOf: applyFeeding(now: now))
         case .notification:
             let cooldownOver = lastNotificationSpokeAt

@@ -50,6 +50,9 @@ public struct GameConfig: Codable, Equatable, Sendable {
     // 주말 요일(그레고리력: 일=1, 토=7) — 주말 세션 시작 시 전용 인사
     public var weekendWeekdays: Set<Int> = [1, 7]
 
+    // 누적 작업(Stop) 마일스톤 — 이 횟수에 도달하면 축하 대사
+    public var workMilestones: Set<Int> = [100, 500, 1000, 5000, 10000]
+
     public static let `default` = GameConfig()
     public init() {}
 
