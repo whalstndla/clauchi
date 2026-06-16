@@ -30,7 +30,11 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
                 group.addTask {
                     let session = LanguageModelSession(instructions: Self.instructions)
                     let response = try await session.respond(to: Self.prompt(for: context))
-                    return Self.sanitize(response.content)
+                    // 한글 무포함·모델 누수·과길이 출력은 nil → 폴백으로 넘김
+                    guard let cleaned = AIDialogueValidator.cleanLine(response.content) else {
+                        throw CancellationError()
+                    }
+                    return cleaned
                 }
                 group.addTask {
                     try await Task.sleep(for: .seconds(1.5))
@@ -112,11 +116,4 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
         }
     }
 
-    static func sanitize(_ raw: String) -> String {
-        let oneLine = raw
-            .replacingOccurrences(of: "\n", with: " ")
-            .replacingOccurrences(of: "\"", with: "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        return oneLine.count > 60 ? String(oneLine.prefix(60)) : oneLine
-    }
 }
