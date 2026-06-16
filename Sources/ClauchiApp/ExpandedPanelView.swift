@@ -5,8 +5,6 @@ import ClauchiCore
 struct ExpandedPanelView: View {
     @Bindable var model: AppModel
     @State private var selectedTab = 0
-    @State private var rerollArmed = false   // 리세마라 2단계 확인
-    @State private var graduateArmed = false // 조기 졸업 2단계 확인
     @State private var isEditingName = false
     @State private var nameInput = ""
     @FocusState private var isNameFieldFocused: Bool
@@ -36,12 +34,15 @@ struct ExpandedPanelView: View {
                 }
             }
 
-            switch selectedTab {
-            case 0: petTab
-            case 1: CollectionView(model: model)
-            default: SettingsView(model: model)
+            // 탭 바는 상단 고정, 콘텐츠는 스크롤 — 패널 고정 높이(420)를 넘는 탭도 안 잘리게
+            ScrollView {
+                switch selectedTab {
+                case 0: petTab
+                case 1: CollectionView(model: model)
+                default: SettingsView(model: model)
+                }
             }
-            Spacer(minLength: 0)
+            .scrollIndicators(.hidden)
         }
         .padding(16)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -169,51 +170,6 @@ struct ExpandedPanelView: View {
                 .frame(maxWidth: 220)
                 .disabled(manualFeedCooldown > 0)
                 .opacity(manualFeedCooldown > 0 ? 0.5 : 1)
-            }
-
-            SettingSwitchRow(label: "🏖️ 휴가 모드", isOn: model.settings.vacationMode) { on in
-                model.toggleVacation(on)
-            }
-            .frame(maxWidth: 220)
-
-            // 리세마라 — rerollLockLevel 미만에서만 가능. 이상이면 조기 졸업으로 전환 (스펙 §5 + 2026-06-16)
-            let isRerollLocked = pet.level >= config.rerollLockLevel
-            if isRerollLocked {
-                // 조기 졸업 — 도감에 졸업 기록을 남기고 새 알. 알 단계에선 숨김
-                if pet.stage != .egg {
-                    SettingChip(label: graduateArmed
-                                ? "정말 졸업시킬까? (한 번 더 클릭)"
-                                : "🎓 졸업시키고 새로 시작",
-                                isOn: graduateArmed) {
-                        if graduateArmed {
-                            graduateArmed = false
-                            model.graduateEarly()
-                        } else {
-                            graduateArmed = true
-                            Task {
-                                try? await Task.sleep(for: .seconds(3))
-                                graduateArmed = false
-                            }
-                        }
-                    }
-                    .frame(maxWidth: 220)
-                }
-            } else {
-                SettingChip(label: rerollArmed
-                            ? "정말 새 알로 바꿀까? (한 번 더 클릭)"
-                            : "🔄 리세마라 — 새 알 뽑기",
-                            isOn: rerollArmed) {
-                    if rerollArmed {
-                        rerollArmed = false
-                        model.reroll()
-                    } else {
-                        rerollArmed = true
-                        Task {
-                            try? await Task.sleep(for: .seconds(3))
-                            rerollArmed = false
-                        }
-                    }
-                }
             }
 
             // 말걸기 입력창 — 알 단계 제외

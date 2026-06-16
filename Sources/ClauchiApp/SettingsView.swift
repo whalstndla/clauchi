@@ -8,10 +8,14 @@ struct SettingsView: View {
         [(1, "일"), (2, "월"), (3, "화"), (4, "수"), (5, "목"), (6, "금"), (7, "토")]
 
     @State private var isHookInstalled = HookInstaller.isInstalled
+    @State private var rerollArmed = false   // 리세마라 2단계 확인
+    @State private var graduateArmed = false // 조기 졸업 2단계 확인
 
     var body: some View {
         // 엔진 상태는 관찰 불가 — 반드시 모델의 스냅샷을 읽어야 토글이 갱신된다
         let settings = model.settings
+        let pet = model.engine.state.pet
+        let config = model.engine.config
         VStack(alignment: .leading, spacing: 12) {
             // 주인 프로필 — 대사 호칭/개인화에 사용
             Text("주인 프로필 (대사 호칭에 사용)")
@@ -57,6 +61,10 @@ struct SettingsView: View {
                 }
             }
 
+            SettingSwitchRow(label: "🏖️ 휴가 모드", isOn: settings.vacationMode) { on in
+                model.toggleVacation(on)
+            }
+
             SettingSwitchRow(label: "AI 대사 (Apple Intelligence)",
                              isOn: settings.dialogueAIEnabled) { enabled in
                 var updated = model.settings
@@ -100,6 +108,50 @@ struct SettingsView: View {
                     }
                 }
             }
+
+            Divider().overlay(Color(white: 0.3))
+
+            // 펫 관리 — 리세마라(Lv.rerollLockLevel 미만) / 조기 졸업(이상) (스펙 §5 + 2026-06-16)
+            Text("펫 관리")
+                .font(.caption).foregroundStyle(.gray)
+            if pet.level >= config.rerollLockLevel {
+                // 조기 졸업 — 도감에 졸업 기록을 남기고 새 알. 알 단계에선 숨김
+                if pet.stage != .egg {
+                    SettingChip(label: graduateArmed
+                                ? "정말 졸업시킬까? (한 번 더 클릭)"
+                                : "🎓 졸업시키고 새로 시작",
+                                isOn: graduateArmed) {
+                        if graduateArmed {
+                            graduateArmed = false
+                            model.graduateEarly()
+                        } else {
+                            graduateArmed = true
+                            Task {
+                                try? await Task.sleep(for: .seconds(3))
+                                graduateArmed = false
+                            }
+                        }
+                    }
+                }
+            } else {
+                SettingChip(label: rerollArmed
+                            ? "정말 새 알로 바꿀까? (한 번 더 클릭)"
+                            : "🔄 리세마라 — 새 알 뽑기",
+                            isOn: rerollArmed) {
+                    if rerollArmed {
+                        rerollArmed = false
+                        model.reroll()
+                    } else {
+                        rerollArmed = true
+                        Task {
+                            try? await Task.sleep(for: .seconds(3))
+                            rerollArmed = false
+                        }
+                    }
+                }
+            }
+
+            Divider().overlay(Color(white: 0.3))
 
             // Dock 아이콘이 없는 앱이라 종료 수단이 여기뿐이다
             SettingChip(label: "Clauchi 종료", isOn: false) {
