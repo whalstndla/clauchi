@@ -6,6 +6,7 @@ struct ExpandedPanelView: View {
     @Bindable var model: AppModel
     @State private var selectedTab = 0
     @State private var rerollArmed = false   // 리세마라 2단계 확인
+    @State private var graduateArmed = false // 조기 졸업 2단계 확인
     @State private var isEditingName = false
     @State private var nameInput = ""
     @FocusState private var isNameFieldFocused: Bool
@@ -175,14 +176,28 @@ struct ExpandedPanelView: View {
             }
             .frame(maxWidth: 220)
 
-            // 리세마라 — rerollLockLevel 미만에서만 가능 (스펙 §5)
+            // 리세마라 — rerollLockLevel 미만에서만 가능. 이상이면 조기 졸업으로 전환 (스펙 §5 + 2026-06-16)
             let isRerollLocked = pet.level >= config.rerollLockLevel
             if isRerollLocked {
-                // 잠금 상태 — 비활성 표시
-                SettingChip(label: "🔒 리세마라 잠금 (Lv.\(config.rerollLockLevel) 이상)",
-                            isOn: false) {}
-                    .opacity(0.4)
-                    .disabled(true)
+                // 조기 졸업 — 도감에 졸업 기록을 남기고 새 알. 알 단계에선 숨김
+                if pet.stage != .egg {
+                    SettingChip(label: graduateArmed
+                                ? "정말 졸업시킬까? (한 번 더 클릭)"
+                                : "🎓 졸업시키고 새로 시작",
+                                isOn: graduateArmed) {
+                        if graduateArmed {
+                            graduateArmed = false
+                            model.graduateEarly()
+                        } else {
+                            graduateArmed = true
+                            Task {
+                                try? await Task.sleep(for: .seconds(3))
+                                graduateArmed = false
+                            }
+                        }
+                    }
+                    .frame(maxWidth: 220)
+                }
             } else {
                 SettingChip(label: rerollArmed
                             ? "정말 새 알로 바꿀까? (한 번 더 클릭)"

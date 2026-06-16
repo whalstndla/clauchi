@@ -99,6 +99,13 @@ public final class PetEngine {
         return [.speak(.rerolled)]
     }
 
+    // 조기 졸업 — rerollLockLevel 이상에서만. 현재 펫을 도감에 졸업(.graduated)으로 남기고
+    // 새 알로 교체한다. 30레벨 자연 졸업과 도감상 동일하게 ⭐로 취급 (스펙 2026-06-16).
+    public func graduateEarly(now: Date) -> [EngineOutput] {
+        guard state.pet.level >= config.rerollLockLevel else { return [] }
+        return graduate(now: now)
+    }
+
     public func handle(_ event: ClaudeEvent) -> [EngineOutput] {
         var outputs: [EngineOutput] = []
         let now = event.ts

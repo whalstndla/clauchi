@@ -260,6 +260,12 @@ final class AppModel {
         saveNow()
     }
 
+    // 조기 졸업 — Lv.rerollLockLevel 이상에서 도감에 졸업 기록을 남기고 새 알 (스펙 2026-06-16)
+    func graduateEarly() {
+        process(engine.graduateEarly(now: clock.now()))
+        saveNow()
+    }
+
     // 이름 변경 — 엔진 검증(트림·12자) 후 즉시 저장
     func renamePet(_ name: String) {
         engine.renamePet(name)
