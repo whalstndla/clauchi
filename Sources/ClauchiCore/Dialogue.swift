@@ -127,6 +127,9 @@ public struct TemplateDialogueProvider: DialogueProviding {
         case .streakMilestone:
             ["며칠째 함께라니! 최고야 🔥", "연속 출석 대단해! 이 기세로 가자!",
              "{owner}, 우리 꾸준함 좀 봐! 🔥"]
+        case .lateNightWork:
+            ["이 시간까지 코딩이라니... 몸 챙겨!", "{owner}, 밤샘은 적당히! 🌙",
+             "늦었어~ 무리하지 말고 곧 자자!"]
         }
     }
 }

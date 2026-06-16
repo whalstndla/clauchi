@@ -44,6 +44,9 @@ public struct GameConfig: Codable, Equatable, Sendable {
     // 연속 사용일(스트릭) 마일스톤 — 이 일수에 도달하면 축하 대사 (스펙 §5 확장 2026-06-16)
     public var streakMilestones: [Int] = [3, 7, 14, 30, 50, 100]
 
+    // 심야(밤샘) 시간대 — 이 시각에 세션을 시작하면 걱정하는 인사 (로컬 시 기준)
+    public var lateNightHours: Set<Int> = [0, 1, 2, 3, 4]
+
     public static let `default` = GameConfig()
     public init() {}
 

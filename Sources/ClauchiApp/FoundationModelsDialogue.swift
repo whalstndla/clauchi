@@ -114,6 +114,7 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
         case .manualFed: "주인이 직접 밥을 줬다. 기쁘고 감사하다"
         case .talked: "주인이 펫에게 말을 걸어왔다. 대화에 즐겁게 반응"
         case .streakMilestone: "주인이 여러 날 연속으로 Claude를 써서 함께한 기념일이다. 꾸준함을 축하"
+        case .lateNightWork: "주인이 한밤중(새벽)에 작업을 시작했다. 밤샘을 걱정하며 건강을 챙기라고"
         }
     }
 

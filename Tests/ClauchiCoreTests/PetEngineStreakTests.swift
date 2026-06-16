@@ -58,3 +58,18 @@ private let oneDay: TimeInterval = 24 * 3600
     let day2 = engine.handle(sessionStart(at: t.addingTimeInterval(oneDay))) // 2 (마일스톤 아님)
     #expect(!day2.contains(.speak(.streakMilestone)))
 }
+
+// 심야(0~4시) 세션 시작은 일반 인사 대신 밤샘 걱정 인사
+@Test func lateNightSessionGreetsWithLateNightLine() {
+    let engine = TestSupport.makeEngine()
+    let twoAM = TestSupport.weekday9am.addingTimeInterval(-7 * 3600)   // 09:00 - 7h = 02:00 UTC
+    let outputs = engine.handle(sessionStart(at: twoAM))
+    #expect(outputs.contains(.speak(.lateNightWork)))
+    #expect(!outputs.contains(.speak(.greeting)))
+}
+
+@Test func daytimeSessionDoesNotTriggerLateNight() {
+    let engine = TestSupport.makeEngine()
+    let outputs = engine.handle(sessionStart(at: TestSupport.weekday9am))  // 09:00
+    #expect(!outputs.contains(.speak(.lateNightWork)))
+}
