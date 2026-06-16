@@ -46,14 +46,39 @@ public struct TemplateDialogueProvider: DialogueProviding {
     }
 
     public func line(for context: DialogueContext) async -> String {
+        // 프롬프트 반응은 작업 키워드에 맞는 대사를 우선 선택(없으면 일반 풀)
+        if context.situation == .promptReaction, let prompt = context.userPrompt,
+           let keyworded = Self.keywordReaction(for: prompt) {
+            return decorate(fill(keyworded, context), for: context)
+        }
         let pool = Self.pool(for: context.situation)
         let index = min(Int(random() * Double(pool.count)), pool.count - 1)
-        let base = pool[index]
-            .replacingOccurrences(of: "{name}", with: context.petName)
+        return decorate(fill(pool[index], context), for: context)
+    }
+
+    // 플레이스홀더 치환 — {name}/{level}/{owner}/{streak}
+    private func fill(_ line: String, _ context: DialogueContext) -> String {
+        line.replacingOccurrences(of: "{name}", with: context.petName)
             .replacingOccurrences(of: "{level}", with: String(context.level))
             .replacingOccurrences(of: "{owner}", with: context.ownerHonorific)
             .replacingOccurrences(of: "{streak}", with: String(context.streakDays))
-        return decorate(base, for: context)
+    }
+
+    // 작업 프롬프트의 키워드 → 맞춤 반응. 매칭 없으면 nil(→ 일반 풀)
+    static func keywordReaction(for prompt: String) -> String? {
+        let lowered = prompt.lowercased()
+        let table: [(keys: [String], line: String)] = [
+            (["버그", "bug", "fix", "오류", "에러", "error", "고쳐", "디버"], "버그 잡으러 출동! 🐛"),
+            (["테스트", "test", "스펙", "spec"], "테스트 통과 기원할게! 🙏"),
+            (["리팩터", "refactor", "정리", "clean", "개선"], "깔끔하게 정리하자~"),
+            (["배포", "deploy", "릴리즈", "release", "출시"], "드디어 배포구나! 두근두근 🚀"),
+            (["문서", "doc", "readme", "주석"], "문서화까지 챙기다니 멋져! 📝"),
+            (["디자인", "ui", "ux", "스타일", "css"], "예쁘게 만들어보자! 🎨"),
+        ]
+        for entry in table where entry.keys.contains(where: { lowered.contains($0) }) {
+            return entry.line
+        }
+        return nil
     }
 
     // 슬픈 상황엔 장난스러운 말끝/데코를 적용하지 않는다(원문 유지)
