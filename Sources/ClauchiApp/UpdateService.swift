@@ -90,14 +90,19 @@ final class UpdateService {
         let installDir = install.deletingLastPathComponent().path
         let staging = stagingAppURL.path
         let stagingNew = installDir + "/.Clauchi.app.new"
+        // 교체가 어느 단계에서 실패해도 백업을 복원하고, 마지막엔 항상 재실행한다.
+        // (실패 시 종료만 되고 재실행이 안 되면 앱이 사라진 것처럼 안 켜진다 — 이를 방어)
         let helper = """
             while kill -0 \(pid) 2>/dev/null; do sleep 0.3; done
-            [ -d "\(staging)" ] || exit 1
-            rm -rf "\(stagingNew)" "\(installPath).bak"
-            cp -R "\(staging)" "\(stagingNew)" &&
-            mv "\(installPath)" "\(installPath).bak" &&
-            mv "\(stagingNew)" "\(installPath)" &&
-            rm -rf "\(installPath).bak" &&
+            if [ -d "\(staging)" ]; then
+              rm -rf "\(stagingNew)" "\(installPath).bak"
+              if cp -R "\(staging)" "\(stagingNew)" && mv "\(installPath)" "\(installPath).bak" && mv "\(stagingNew)" "\(installPath)"; then
+                rm -rf "\(installPath).bak"
+              else
+                rm -rf "\(installPath)" "\(stagingNew)"
+                [ -d "\(installPath).bak" ] && mv "\(installPath).bak" "\(installPath)"
+              fi
+            fi
             open "\(installPath)"
             """
         let process = Process()
