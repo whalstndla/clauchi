@@ -163,11 +163,14 @@ public struct GameState: Codable, Equatable, Sendable {
     public var lifetimeStops: Int            // 누적 작업(Stop) 횟수 — 펫을 넘어 영구 집계
     public var lifetimeManualFeeds: Int      // 누적 수동 급식 횟수
     public var lifetimePets: Int             // 누적 쓰다듬기 횟수
+    public var todayStops: Int               // 오늘 작업(Stop) 횟수 — 날짜가 바뀌면 0으로 리셋
+    public var todayStopsDay: Date?          // todayStops가 집계 중인 '날'(startOfDay)
     public init(version: Int, pet: PetState, collection: [CollectionRecord],
                 settings: GameSettings, eventLogOffset: UInt64,
                 lastChatterAt: Date?, lastActivityAt: Date?, continuousWorkStartedAt: Date?,
                 streakDays: Int = 0, lastStreakDay: Date? = nil,
-                lifetimeStops: Int = 0, lifetimeManualFeeds: Int = 0, lifetimePets: Int = 0) {
+                lifetimeStops: Int = 0, lifetimeManualFeeds: Int = 0, lifetimePets: Int = 0,
+                todayStops: Int = 0, todayStopsDay: Date? = nil) {
         self.version = version; self.pet = pet; self.collection = collection
         self.settings = settings; self.eventLogOffset = eventLogOffset
         self.lastChatterAt = lastChatterAt; self.lastActivityAt = lastActivityAt
@@ -175,12 +178,14 @@ public struct GameState: Codable, Equatable, Sendable {
         self.streakDays = streakDays; self.lastStreakDay = lastStreakDay
         self.lifetimeStops = lifetimeStops; self.lifetimeManualFeeds = lifetimeManualFeeds
         self.lifetimePets = lifetimePets
+        self.todayStops = todayStops; self.todayStopsDay = todayStopsDay
     }
 
     enum CodingKeys: String, CodingKey {
         case version, pet, collection, settings, eventLogOffset
         case lastChatterAt, lastActivityAt, continuousWorkStartedAt
         case streakDays, lastStreakDay, lifetimeStops, lifetimeManualFeeds, lifetimePets
+        case todayStops, todayStopsDay
     }
 
     // 신규 필드(streak/lifetime)가 없는 구버전 세이브 마이그레이션 — 기본 0 / nil
@@ -199,6 +204,8 @@ public struct GameState: Codable, Equatable, Sendable {
         lifetimeStops = try container.decodeIfPresent(Int.self, forKey: .lifetimeStops) ?? 0
         lifetimeManualFeeds = try container.decodeIfPresent(Int.self, forKey: .lifetimeManualFeeds) ?? 0
         lifetimePets = try container.decodeIfPresent(Int.self, forKey: .lifetimePets) ?? 0
+        todayStops = try container.decodeIfPresent(Int.self, forKey: .todayStops) ?? 0
+        todayStopsDay = try container.decodeIfPresent(Date.self, forKey: .todayStopsDay)
     }
 }
 

@@ -123,6 +123,17 @@ public final class PetEngine {
         return config.streakMilestones.contains(state.streakDays)
     }
 
+    // 오늘 작업 수 갱신 — 날짜가 바뀌면 0으로 리셋 후 1, 같은 날이면 +1
+    private func updateTodayStops(now: Date) {
+        let today = calendar.startOfDay(for: now)
+        if let day = state.todayStopsDay, calendar.isDate(day, inSameDayAs: today) {
+            state.todayStops += 1
+        } else {
+            state.todayStops = 1
+            state.todayStopsDay = today
+        }
+    }
+
     public func handle(_ event: ClaudeEvent) -> [EngineOutput] {
         var outputs: [EngineOutput] = []
         let now = event.ts
@@ -152,6 +163,7 @@ public final class PetEngine {
             outputs.append(contentsOf: applyToolUseFeeding(now: now))
         case .stop:
             state.lifetimeStops += 1
+            updateTodayStops(now: now)
             if config.workMilestones.contains(state.lifetimeStops) {
                 outputs.append(.speak(.workMilestone))
             }
