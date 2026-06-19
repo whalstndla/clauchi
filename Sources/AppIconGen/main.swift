@@ -132,8 +132,8 @@ func renderIcon() -> CGImage {
     ctx.saveGState()
     ctx.addPath(background)
     ctx.clip()
-    // 본체(캔디 핑크)가 또렷이 떠 보이도록 중앙은 거의 크림화이트, 가장자리는 소프트 로즈
-    ctx.drawRadialGradient(gradient([cgRGB(0xFFF4F8), cgRGB(0xF1B7CD)]),
+    // 본체(캔디 핑크)가 또렷이 떠 보이도록 중앙은 밝은 그레이, 가장자리는 한 톤 진한 그레이
+    ctx.drawRadialGradient(gradient([cgRGB(0xF4F5F7), cgRGB(0xD5D8DD)]),
                            startCenter: CGPoint(x: 512, y: 560), startRadius: 0,
                            endCenter: CGPoint(x: 512, y: 540), endRadius: 600,
                            options: [.drawsAfterEndLocation])
