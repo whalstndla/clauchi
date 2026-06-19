@@ -48,6 +48,12 @@ public extension DialogueSituation {
 
 public protocol DialogueProviding: Sendable {
     func line(for context: DialogueContext) async -> String
+    // AI 응답이 시간 내 오지 않아 타임아웃됐을 때 쓸 안내 대사. 해당 없으면 nil(→ 일반 폴백).
+    func timeoutLine(for context: DialogueContext) -> String?
+}
+
+public extension DialogueProviding {
+    func timeoutLine(for context: DialogueContext) -> String? { nil }
 }
 
 // 오프라인 폴백 — 상황별 템플릿 풀에서 랜덤 (스펙 §6)
@@ -72,6 +78,23 @@ public struct TemplateDialogueProvider: DialogueProviding {
         let index = min(Int(random() * Double(pool.count)), pool.count - 1)
         return decorate(fill(pool[index], context), for: context)
     }
+
+    // AI가 시간 내 응답하지 못했을 때(타임아웃) 말걸기에 한해 귀엽게 둘러대는 안내.
+    // 말걸기 외 상황은 nil(일반 폴백 사용). 종/성격 데코는 다른 대사와 동일하게 입힌다.
+    public func timeoutLine(for context: DialogueContext) -> String? {
+        guard context.situation == .talked else { return nil }
+        let pool = Self.talkTimeoutPool
+        let index = min(Int(random() * Double(pool.count)), pool.count - 1)
+        return decorate(fill(pool[index], context), for: context)
+    }
+
+    // 말걸기 타임아웃 전용 풀 — "어려워서 답 못했어" 류의 귀여운 둘러대기
+    static let talkTimeoutPool = [
+        "음… 미안, 그건 나한텐 좀 어려운 말이야 😅",
+        "으음~ 너무 어려워서 머리에 쥐 날 것 같아!",
+        "그건 좀 어렵다… 더 쉽게 말해줄래?",
+        "에구, 무슨 말인지 깜빡했어… 다시 한 번만!",
+    ]
 
     // 플레이스홀더 치환 — {name}/{level}/{owner}/{streak}
     private func fill(_ line: String, _ context: DialogueContext) -> String {

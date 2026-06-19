@@ -4,7 +4,11 @@ import ClauchiCore
 import FoundationModels
 #endif
 
-// 온디바이스 AI 대사 — 1.5초 내 응답 없거나 실패하면 템플릿 폴백 (스펙 §6)
+// AI 응답이 제한 시간을 넘겼음을 검증 실패·모델 오류와 구분하기 위한 전용 에러
+struct DialogueTimeout: Error {}
+
+// 온디바이스 AI 대사 — 제한 시간 내 응답 없거나 실패하면 템플릿 폴백 (스펙 §6).
+// 단, '타임아웃'은 말걸기에 한해 전용 안내 대사로 알려준다(조용한 폴백 대신).
 struct FoundationModelsDialogueProvider: DialogueProviding {
     let fallback: any DialogueProviding
 
@@ -39,7 +43,7 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
                 group.addTask {
                     // 말걸기처럼 사용자가 기다리는 상황은 더 길게, 자동 발화는 짧게(스펙 §6)
                     try await Task.sleep(for: .seconds(context.situation.aiResponseTimeoutSeconds))
-                    throw CancellationError()
+                    throw DialogueTimeout()   // 타임아웃은 검증 실패와 구분
                 }
                 guard let first = try await group.next(), !first.isEmpty else {
                     throw CancellationError()
@@ -47,6 +51,10 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
                 group.cancelAll()
                 return first
             }
+        } catch is DialogueTimeout {
+            // 타임아웃: 말걸기엔 "너무 어려웠어" 식 안내, 그 외 상황은 일반 폴백
+            if let timeoutLine = fallback.timeoutLine(for: context) { return timeoutLine }
+            return await fallback.line(for: context)
         } catch {
             return await fallback.line(for: context)
         }
