@@ -13,6 +13,9 @@ public struct ChangelogEntry: Equatable, Sendable {
 
 public enum Changelog {
     public static let entries: [ChangelogEntry] = [
+        ChangelogEntry(version: "0.3.14", date: "2026.06.19", changes: [
+            "앱 아이콘 추가 — 핑크 다마고치(부화 직전 알이 액정에)",
+        ]),
         ChangelogEntry(version: "0.3.13", date: "2026.06.19", changes: [
             "짧은 텀에 여러 번 말 걸어도 무시되지 않게 — 말걸기 응답을 순서대로 모두 표시",
             "자동 발화(인사·잡담 등)는 최신 하나만 합치고, 말걸기를 우선 표시",
