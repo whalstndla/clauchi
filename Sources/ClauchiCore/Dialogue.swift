@@ -32,6 +32,12 @@ public struct DialogueContext: Equatable, Sendable {
     public var ownerHonorific: String {
         ownerName.isEmpty ? ownerGender.honorific : ownerName
     }
+
+    // AI 프롬프트용 호칭 지침 — 해결된 호칭 '하나만' 쓰고 다른 호칭(주인님/형/언니 등)을
+    // 섞지 않도록 명시. "민수야! 주인님!" 같은 이름+일반호칭 혼용 버그를 막는다.
+    public var ownerAddressHint: String {
+        "주인을 부를 땐 반드시 '\(ownerHonorific)' 하나만 쓰고, 다른 호칭을 덧붙이지 마. "
+    }
 }
 
 public protocol DialogueProviding: Sendable {

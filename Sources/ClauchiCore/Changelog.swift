@@ -13,6 +13,11 @@ public struct ChangelogEntry: Equatable, Sendable {
 
 public enum Changelog {
     public static let entries: [ChangelogEntry] = [
+        ChangelogEntry(version: "0.3.9", date: "2026.06.19", changes: [
+            "AI 대사 호칭 정리 — 이름이 있으면 이름 하나로만 부르고 '주인님' 등과 섞지 않음",
+            "성격이 문장 구성·말투에 더 분명히 드러나도록 AI 톤 지시 강화",
+            "한꺼번에 쌓인 대사는 전부 노출하지 않고 최신 한마디만 표시",
+        ]),
         ChangelogEntry(version: "0.3.8", date: "2026.06.19", changes: [
             "근무시간(활동 시간대) 설정 — 퇴근 후엔 펫도 같이 취침해 밤사이 굶어 죽지 않음",
             "기본 09~18시, 설정에서 출근·퇴근 시각 변경(야간근무 등 자정 넘김도 지원)",

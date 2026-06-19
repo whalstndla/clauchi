@@ -57,6 +57,8 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
     static let instructions = """
         너는 맥북 노치에 사는 픽셀 다마고치 펫이다. 주인은 개발자다. \
         반말로, 한국어 한 문장(최대 40자)으로만 답한다. 이모지는 최대 1개. \
+        주인을 부를 땐 주어진 호칭 하나만 쓰고, 여러 호칭을 섞지 않는다. \
+        성격이 문장의 어조와 구성에 분명히 드러나게 한다. \
         따옴표나 설명 없이 대사만 출력한다.
         """
 
@@ -64,18 +66,14 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
         let speech = SpeciesSpeech.style(for: context.species)
         // AI 경로는 죽음/졸업 상황에도 성격 힌트를 그대로 주입한다(오프라인 decorate는
         // 슬픈 상황에 데코를 생략 — 의도된 비대칭). 상황 설명이 톤을 지배하므로 충돌 없음.
-        var ownerInfo = ""
-        if !context.ownerName.isEmpty {
-            ownerInfo = "주인 이름은 \(context.ownerName). "
-        }
-        ownerInfo += context.ownerGender == .unspecified ? "" :
-            "주인 성별은 \(context.ownerGender == .male ? "남성" : "여성"). "
+        // 호칭은 해결된 단일 호칭만 지침으로 주입한다(이름+일반호칭 혼용 버그 방지).
         // 스트릭 마일스톤 상황에선 연속 일수를 프롬프트에 넣어 AI가 숫자를 언급하게 한다
         let streakInfo = context.situation == .streakMilestone && context.streakDays > 0
             ? "연속 사용 \(context.streakDays)일째. " : ""
         let base = "너는 \(speech.aiHint) 말투의 \(context.petName)(Lv.\(context.level), " +
                    "포만감 \(context.satiety)/100, 기분 \(context.mood)/100). " +
-                   "성격은 \(context.personality.aiHint). " + ownerInfo + streakInfo
+                   "성격은 \(context.personality.aiHint) 말하고, 그 성격이 문장 구성에 분명히 드러나게. " +
+                   context.ownerAddressHint + streakInfo
         if let userPrompt = context.userPrompt {
             if context.situation == .talked {
                 return base + "주인이 너에게 건넨 말: \"\(Self.sanitizeInput(userPrompt))\". " +

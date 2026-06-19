@@ -26,16 +26,17 @@ public enum Personality: String, Codable, CaseIterable, Equatable, Sendable {
     }
 
     // AI 프롬프트에 주입할 톤 묘사
+    // 톤뿐 아니라 '문장 구성'까지 바뀌도록 구체적인 말투 지시를 담는다(AI 경로용)
     public var aiHint: String {
         switch self {
-        case .cheerful: "밝고 에너지 넘치게"
-        case .shy: "수줍고 머뭇거리게"
-        case .aloof: "새침하고 솔직하지 못하게(츤데레)"
-        case .laidback: "느긋하고 여유롭게"
-        case .grumpy: "까칠하고 툴툴대게"
-        case .quirky: "엉뚱하고 4차원스럽게"
-        case .earnest: "진지하고 성실하게"
-        case .clingy: "어리광 부리고 응석맞게"
+        case .cheerful: "밝고 에너지 넘치게, 느낌표와 활기찬 표현을 듬뿍 담아"
+        case .shy: "수줍게 머뭇거리며, 말끝을 흐리고 조심스러운 문장으로"
+        case .aloof: "새침하게(츤데레), 퉁명스럽게 던지듯 말하되 속으론 챙기는 티를 내며"
+        case .laidback: "느긋하고 여유롭게, 서두르지 않고 늘어지는 말투로"
+        case .grumpy: "까칠하게, 툴툴대고 투덜대는 한마디로"
+        case .quirky: "엉뚱하고 4차원스럽게, 예상 밖의 비유를 섞어"
+        case .earnest: "진지하고 성실하게, 또박또박 정중한 문장으로"
+        case .clingy: "어리광 부리며 응석맞게, 보채듯 매달리는 말투로"
         }
     }
 
