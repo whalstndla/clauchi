@@ -13,6 +13,10 @@ public struct ChangelogEntry: Equatable, Sendable {
 
 public enum Changelog {
     public static let entries: [ChangelogEntry] = [
+        ChangelogEntry(version: "0.3.11", date: "2026.06.19", changes: [
+            "말걸기는 AI 응답을 더 기다리도록(1.5→4초) 완화 — 말 걸면 AI 대사 체감 ↑",
+            "Apple Intelligence를 못 쓰는 경우 설정에 사유 표시(왜 오프라인 대사인지)",
+        ]),
         ChangelogEntry(version: "0.3.10", date: "2026.06.19", changes: [
             "말걸기 대화 고도화 — 인사·칭찬·안부 등 말 내용에 맞춰 반응(대화 느낌 ↑)",
             "설정 탭을 카테고리 아코디언으로 정리(프로필·생활 리듬·대사·시스템·펫 관리)",

@@ -40,6 +40,12 @@ public struct DialogueContext: Equatable, Sendable {
     }
 }
 
+public extension DialogueSituation {
+    // AI 응답 대기 한도(초) — 사용자가 직접 보내고 기다리는 말걸기는 더 길게 준다.
+    // 그 외(자동 발화)는 짧게 잡아 폴백을 빨리 띄운다.
+    var aiResponseTimeoutSeconds: Double { self == .talked ? 4.0 : 1.5 }
+}
+
 public protocol DialogueProviding: Sendable {
     func line(for context: DialogueContext) async -> String
 }

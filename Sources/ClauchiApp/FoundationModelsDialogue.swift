@@ -37,7 +37,8 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
                     return cleaned
                 }
                 group.addTask {
-                    try await Task.sleep(for: .seconds(1.5))
+                    // 말걸기처럼 사용자가 기다리는 상황은 더 길게, 자동 발화는 짧게(스펙 §6)
+                    try await Task.sleep(for: .seconds(context.situation.aiResponseTimeoutSeconds))
                     throw CancellationError()
                 }
                 guard let first = try await group.next(), !first.isEmpty else {
@@ -51,6 +52,17 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
         }
         #else
         return await fallback.line(for: context)
+        #endif
+    }
+
+    // AI 대사 가용성 사유 — 사용 가능하면 nil, 아니면 설정에 보여줄 사용자용 사유.
+    // 정확한 unavailable 케이스 이름에 의존하지 않도록 available 여부만 본다(빌드 안정성).
+    static func availabilityNote() -> String? {
+        #if canImport(FoundationModels)
+        if case .available = SystemLanguageModel.default.availability { return nil }
+        return "Apple Intelligence를 쓸 수 없어 오프라인 대사로 동작 중 (설정 > Apple Intelligence 확인)"
+        #else
+        return "이 빌드에선 AI 대사를 쓸 수 없어 오프라인 대사로 동작 중"
         #endif
     }
 

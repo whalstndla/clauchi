@@ -146,6 +146,13 @@ struct SettingsView: View {
             model.applySettings(updated)
             model.refreshDialogueProvider()
         }
+        // AI를 켰는데 실제로는 못 쓰는 경우(미지원·미활성·다운로드 중) 사유를 알려준다
+        if settings.dialogueAIEnabled, let note = FoundationModelsDialogueProvider.availabilityNote() {
+            Text("⚠️ \(note)")
+                .font(.caption2)
+                .foregroundStyle(CuteTheme.yellow)
+                .fixedSize(horizontal: false, vertical: true)
+        }
 
         SettingSwitchRow(label: "💬 랜덤 잡담",
                          isOn: settings.randomChatterEnabled) { enabled in
