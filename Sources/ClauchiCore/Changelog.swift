@@ -13,6 +13,9 @@ public struct ChangelogEntry: Equatable, Sendable {
 
 public enum Changelog {
     public static let entries: [ChangelogEntry] = [
+        ChangelogEntry(version: "0.3.15", date: "2026.06.19", changes: [
+            "앱 아이콘 배경을 회색으로 다듬음 — 핑크 본체가 더 또렷",
+        ]),
         ChangelogEntry(version: "0.3.14", date: "2026.06.19", changes: [
             "앱 아이콘 추가 — 핑크 다마고치(부화 직전 알이 액정에)",
         ]),
