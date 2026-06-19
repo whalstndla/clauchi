@@ -77,7 +77,8 @@ struct FoundationModelsDialogueProvider: DialogueProviding {
         if let userPrompt = context.userPrompt {
             if context.situation == .talked {
                 return base + "주인이 너에게 건넨 말: \"\(Self.sanitizeInput(userPrompt))\". " +
-                              "이 말에 펫답게 대화로 반응 한마디:"
+                              "그 말의 내용에 구체적으로 반응하고, 자연스럽게 되묻거나 맞장구치며 " +
+                              "대화를 이어가는 펫다운 한마디:"
             }
             return base + "주인이 방금 Claude에게 시킨 작업: \"\(Self.sanitizeInput(userPrompt))\". " +
                           "이 작업에 대해 펫답게 응원/반응 한마디:"

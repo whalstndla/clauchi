@@ -57,6 +57,11 @@ public struct TemplateDialogueProvider: DialogueProviding {
            let keyworded = Self.keywordReaction(for: prompt) {
             return decorate(fill(keyworded, context), for: context)
         }
+        // 말걸기는 메시지 의도(인사/칭찬/안부 등)에 맞는 대사를 우선 선택해 대화처럼 반응
+        if context.situation == .talked, let message = context.userPrompt,
+           let reaction = Self.talkReaction(for: message) {
+            return decorate(fill(reaction, context), for: context)
+        }
         let pool = Self.pool(for: context.situation)
         let index = min(Int(random() * Double(pool.count)), pool.count - 1)
         return decorate(fill(pool[index], context), for: context)
@@ -80,6 +85,26 @@ public struct TemplateDialogueProvider: DialogueProviding {
             (["배포", "deploy", "릴리즈", "release", "출시"], "드디어 배포구나! 두근두근 🚀"),
             (["문서", "doc", "readme", "주석"], "문서화까지 챙기다니 멋져! 📝"),
             (["디자인", "ui", "ux", "스타일", "css"], "예쁘게 만들어보자! 🎨"),
+        ]
+        for entry in table where entry.keys.contains(where: { lowered.contains($0) }) {
+            return entry.line
+        }
+        return nil
+    }
+
+    // 말걸기(.talked) 메시지의 의도 → 맞춤 반응. 매칭 없으면 nil(→ 일반 풀).
+    // 일반 풀과 달리 "주인이 한 말"에 직접 반응해 대화가 이어지는 느낌을 준다.
+    static func talkReaction(for message: String) -> String? {
+        let lowered = message.lowercased()
+        let table: [(keys: [String], line: String)] = [
+            (["안녕", "하이", "hi", "hello", "ㅎㅇ", "안뇽", "방가", "반가", "왔어"], "안녕! 와줘서 반가워 🐾"),
+            (["뭐해", "모해", "뭐 해", "뭐하", "심심", "놀자"], "코드 구경 중이었지~ 넌 뭐 해?"),
+            (["귀여", "귀엽", "예뻐", "예쁘", "이뻐", "이쁘", "사랑", "좋아", "최고", "멋져", "멋지", "착해", "대단"], "헤헤, 쑥스럽잖아~ 고마워!"),
+            (["고마", "감사", "thx", "thank"], "천만에! 언제든 불러~"),
+            (["미안", "sorry", "쏘리"], "괜찮아~ 신경 쓰지 마!"),
+            (["잘자", "잘 자", "굿나잇", "굿밤", "자러", "잘게", "bye", "들어가", "쉬어"], "잘 자! 좋은 꿈 꿔~ 🌙"),
+            (["배고", "밥", "먹"], "나도 출출해~ 작업 시켜주면 배불러져 🍚"),
+            (["힘들", "지쳐", "피곤", "졸려", "스트레스", "지친"], "고생 많아~ 잠깐 쉬어가도 괜찮아!"),
         ]
         for entry in table where entry.keys.contains(where: { lowered.contains($0) }) {
             return entry.line

@@ -13,6 +13,10 @@ public struct ChangelogEntry: Equatable, Sendable {
 
 public enum Changelog {
     public static let entries: [ChangelogEntry] = [
+        ChangelogEntry(version: "0.3.10", date: "2026.06.19", changes: [
+            "말걸기 대화 고도화 — 인사·칭찬·안부 등 말 내용에 맞춰 반응(대화 느낌 ↑)",
+            "설정 탭을 카테고리 아코디언으로 정리(프로필·생활 리듬·대사·시스템·펫 관리)",
+        ]),
         ChangelogEntry(version: "0.3.9", date: "2026.06.19", changes: [
             "AI 대사 호칭 정리 — 이름이 있으면 이름 하나로만 부르고 '주인님' 등과 섞지 않음",
             "성격이 문장 구성·말투에 더 분명히 드러나도록 AI 톤 지시 강화",
