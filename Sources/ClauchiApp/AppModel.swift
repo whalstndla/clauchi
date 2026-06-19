@@ -256,8 +256,11 @@ final class AppModel {
                 if !retry.isEmpty { text = retry }
             }
             lastDialogueText = text
-            toastPresenter.enqueue(ToastPresenter.Toast(
-                text: text, expression: expression, species: species, stage: stage))
+            // 말걸기 응답은 큐에 쌓아 모두 보여준다(여러 번 말걸어도 무시되지 않게)
+            toastPresenter.enqueue(
+                ToastPresenter.Toast(text: text, expression: expression,
+                                     species: species, stage: stage),
+                isUserTalk: context.situation == .talked)
         }
     }
 

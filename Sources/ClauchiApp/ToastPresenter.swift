@@ -2,8 +2,10 @@ import AppKit
 import SwiftUI
 import ClauchiCore
 
-// C형 토스트 — 노치 아래로 등장, 5초 후 자동 닫힘.
-// 응답이 한꺼번에 쌓여도 전부 순차 노출하지 않고 '최신 한마디' 하나만 보여준다(스펙 §7).
+// C형 토스트 — 노치 아래로 등장, 5초 후 자동 닫힘 (스펙 §7).
+// 표시 순서는 ToastScheduler(순수)가 결정한다:
+//  - 말걸기 응답은 큐에 쌓아 순서대로 전부 보여주고(무시 안 함),
+//  - 자동 발화는 최신 하나만 합쳐 쌓이지 않게 한다. 말걸기가 자동보다 우선.
 @MainActor
 final class ToastPresenter {
     struct Toast: Equatable {
@@ -13,19 +15,29 @@ final class ToastPresenter {
         let stage: Stage
     }
 
+    private var scheduler = ToastScheduler<Toast>()
     private var panel: NotchPanel?
-    private var current: Toast?
     private var dismissTask: Task<Void, Never>?
 
-    // 항상 최신 토스트로 갱신한다. 이미 떠 있으면 쌓인 이전 응답은 버리고
-    // 내용만 교체해(깜빡임 없이) 표시 시간을 리셋한다.
-    func enqueue(_ toast: Toast) {
-        // 같은 내용이 또 오면 표시 시간만 연장
-        guard toast != current else { scheduleDismiss(); return }
-        current = toast
+    // isUserTalk: 사용자가 직접 건 말걸기의 응답이면 true(큐에 쌓아 모두 표시).
+    func enqueue(_ toast: Toast, isUserTalk: Bool = false) {
+        if scheduler.enqueue(toast, isTalk: isUserTalk) { showCurrent() }
+    }
+
+    // 현재 표시 종료 → 다음(말걸기 큐/대기 자동)으로. 없으면 패널을 닫는다.
+    func dismiss() {
+        if scheduler.advance() { showCurrent() } else { hide() }
+    }
+
+    private func showCurrent() {
+        guard let toast = scheduler.current else { hide(); return }
+        render(toast)
+        scheduleDismiss()
+    }
+
+    private func render(_ toast: Toast) {
         if let panel {
-            // 이미 떠 있으면 같은 패널의 내용만 교체(패널이 쌓이지 않게).
-            // rootView 갱신이 가능하면 깜빡임 없이, 아니면 contentView를 교체.
+            // 이미 떠 있으면 같은 패널의 내용만 교체(패널이 쌓이지 않게)
             if let host = panel.contentView as? NSHostingView<ToastView> {
                 host.rootView = makeView(toast)
             } else {
@@ -34,7 +46,6 @@ final class ToastPresenter {
         } else {
             present(toast)
         }
-        scheduleDismiss()
     }
 
     private func makeView(_ toast: Toast) -> ToastView {
@@ -62,11 +73,10 @@ final class ToastPresenter {
         }
     }
 
-    func dismiss() {
+    private func hide() {
         dismissTask?.cancel()
         dismissTask = nil
         panel?.orderOut(nil)
         panel = nil
-        current = nil
     }
 }
