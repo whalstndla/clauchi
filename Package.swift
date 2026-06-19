@@ -9,6 +9,7 @@ let package = Package(
         .executableTarget(name: "ClauchiApp", dependencies: ["ClauchiCore"]),
         .executableTarget(name: "ClauchiHook", dependencies: ["ClauchiCore"]),
         .executableTarget(name: "SpritePreviewGen", dependencies: ["ClauchiCore"]),
+        .executableTarget(name: "AppIconGen", dependencies: ["ClauchiCore"]),
         .testTarget(name: "ClauchiCoreTests", dependencies: ["ClauchiCore"]),
     ]
 )

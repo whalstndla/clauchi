@@ -14,6 +14,11 @@ mkdir -p "$APP/Contents/MacOS"
 cp .build/release/ClauchiApp "$APP/Contents/MacOS/Clauchi"
 cp .build/release/ClauchiHook "$APP/Contents/MacOS/ClauchiHook"
 
+# 앱 아이콘 생성 + 배치 (AppIconGen → iconset → AppIcon.icns)
+bash Scripts/make-icon.sh
+mkdir -p "$APP/Contents/Resources"
+cp build/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -22,6 +27,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>CFBundleExecutable</key><string>Clauchi</string>
     <key>CFBundleIdentifier</key><string>com.clauchi.app</string>
     <key>CFBundleName</key><string>Clauchi</string>
+    <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>$VERSION</string>
     <key>LSMinimumSystemVersion</key><string>26.0</string>
