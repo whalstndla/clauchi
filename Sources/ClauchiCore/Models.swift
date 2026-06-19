@@ -116,18 +116,29 @@ public struct GameSettings: Codable, Equatable, Sendable {
     public var ownerName: String        // 빈 문자열이면 성별 기반 기본 호칭 사용
     public var ownerGender: OwnerGender
     public var randomChatterEnabled: Bool   // 심심할 때 거는 랜덤 잡담 on/off
+    // 근무시간(활동 시간대) — 켜면 근무시간 밖에는 펫도 같이 취침해 포만감 감쇠·기분 변화·
+    // 사망 타이머가 모두 멈춘다(급식은 시각과 무관하게 계속 가능). 자정을 넘기는 야간근무도 지원.
+    public var workHoursEnabled: Bool
+    public var workStartHour: Int           // 출근 시각 (0–23, 로컬 시). 이 시각부터 펫 시간이 흐른다
+    public var workEndHour: Int             // 퇴근 시각 (0–23). 이 시각부터 펫이 취침(감쇠 정지)
+    // init 기본값은 OFF — 인라인 생성/테스트의 기존 동작을 보존한다.
+    // 신규 설치/구버전 세이브 마이그레이션은 `default`·`init(from:)`에서 ON으로 켠다.
     public init(restWeekdays: Set<Int>, vacationMode: Bool, dialogueAIEnabled: Bool,
                 launchAtLogin: Bool, ownerName: String = "",
-                ownerGender: OwnerGender = .unspecified, randomChatterEnabled: Bool = true) {
+                ownerGender: OwnerGender = .unspecified, randomChatterEnabled: Bool = true,
+                workHoursEnabled: Bool = false, workStartHour: Int = 9, workEndHour: Int = 18) {
         self.restWeekdays = restWeekdays; self.vacationMode = vacationMode
         self.dialogueAIEnabled = dialogueAIEnabled; self.launchAtLogin = launchAtLogin
         self.ownerName = ownerName; self.ownerGender = ownerGender
         self.randomChatterEnabled = randomChatterEnabled
+        self.workHoursEnabled = workHoursEnabled
+        self.workStartHour = workStartHour; self.workEndHour = workEndHour
     }
 
     enum CodingKeys: String, CodingKey {
         case restWeekdays, vacationMode, dialogueAIEnabled, launchAtLogin
         case ownerName, ownerGender, randomChatterEnabled
+        case workHoursEnabled, workStartHour, workEndHour
     }
 
     // 구버전 세이브 마이그레이션 — 없는 필드는 기본값으로
@@ -142,11 +153,17 @@ public struct GameSettings: Codable, Equatable, Sendable {
             ?? .unspecified
         randomChatterEnabled = try container.decodeIfPresent(
             Bool.self, forKey: .randomChatterEnabled) ?? true
+        // 구버전 세이브에 없으면 근무시간 기능을 켜 준다(밤사이 굶어 죽는 문제 기본 방지)
+        workHoursEnabled = try container.decodeIfPresent(
+            Bool.self, forKey: .workHoursEnabled) ?? true
+        workStartHour = try container.decodeIfPresent(Int.self, forKey: .workStartHour) ?? 9
+        workEndHour = try container.decodeIfPresent(Int.self, forKey: .workEndHour) ?? 18
     }
 
     public static let `default` = GameSettings(
         restWeekdays: [1, 7], vacationMode: false, dialogueAIEnabled: true,
-        launchAtLogin: false, ownerName: "", ownerGender: .unspecified)
+        launchAtLogin: false, ownerName: "", ownerGender: .unspecified,
+        workHoursEnabled: true, workStartHour: 9, workEndHour: 18)
 }
 
 // 펫 생애 하이라이트 한 줄 — 부화/성체/졸업/사망/마일스톤 등

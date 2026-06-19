@@ -372,8 +372,8 @@ public final class PetEngine {
             }
         }
 
-        // 포만감 감쇠 — 알 단계/휴식 시간엔 정지
-        if state.pet.stage != .egg && !isRestTime(now: now) {
+        // 포만감 감쇠 — 알 단계/휴식 시간/근무 외 시간엔 정지
+        if state.pet.stage != .egg && !isRestTime(now: now) && !isOutsideWorkHours(now: now) {
             let satietyBefore = state.pet.satiety
             state.pet.satiety = max(0, satietyBefore - config.satietyDecayPerHour * delta / 3600)
             if !hungryWarned && state.pet.satiety <= config.hungryThreshold && state.pet.satiety > 0 {
@@ -396,6 +396,8 @@ public final class PetEngine {
                 // 휴가: 동결
             } else if isRestTime(now: now) {
                 state.pet.mood = min(100, state.pet.mood + config.moodRestGainPerHour * delta / 3600)
+            } else if isOutsideWorkHours(now: now) {
+                // 근무 외 — 펫도 같이 취침, 기분 동결(회복도 감소도 없음)
             } else {
                 var moodDecayPerHour = config.moodDecayPerHour
                 if state.pet.satiety <= config.hungryThreshold {
@@ -425,6 +427,21 @@ public final class PetEngine {
             || state.settings.restWeekdays.contains(calendar.component(.weekday, from: now))
     }
 
+    // 근무시간 밖인가 — 기능이 켜져 있고 현재 시각이 [출근, 퇴근) 범위 밖이면 true.
+    // 자정을 넘기는 야간근무(출근>퇴근, 예: 22~6시)도 지원. 출근==퇴근이면 24시간 근무로 간주(항상 false).
+    private func isOutsideWorkHours(now: Date) -> Bool {
+        let settings = state.settings
+        guard settings.workHoursEnabled, settings.workStartHour != settings.workEndHour
+        else { return false }
+        let hour = calendar.component(.hour, from: now)
+        let start = settings.workStartHour
+        let end = settings.workEndHour
+        let working = start < end
+            ? (hour >= start && hour < end)        // 예: 9~18 → 9..17시 근무
+            : (hour >= start || hour < end)        // 예: 22~6 → 22,23,0..5시 근무
+        return !working
+    }
+
     // UI 표시 상태 — 우선순위: 휴가 > 알 > 위독 > 배고픔 > 휴일놀기 > 작업 > 잠 > 대기 (스펙 §7)
     public func visualState(now: Date) -> VisualState {
         if state.settings.vacationMode { return .vacation }
@@ -433,6 +450,7 @@ public final class PetEngine {
         if state.pet.satiety <= config.hungryThreshold { return .hungry }
         if isRestTime(now: now) { return .playing }
         if let until = workingUntil, until > now { return .working }
+        if isOutsideWorkHours(now: now) { return .sleeping }   // 근무 외 — 펫도 같이 취침(Zzz)
         if let last = state.lastActivityAt,
            now.timeIntervalSince(last) >= config.sleepAfterIdleSeconds { return .sleeping }
         return .idle

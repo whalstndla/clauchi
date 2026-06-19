@@ -13,6 +13,10 @@ public struct ChangelogEntry: Equatable, Sendable {
 
 public enum Changelog {
     public static let entries: [ChangelogEntry] = [
+        ChangelogEntry(version: "0.3.8", date: "2026.06.19", changes: [
+            "근무시간(활동 시간대) 설정 — 퇴근 후엔 펫도 같이 취침해 밤사이 굶어 죽지 않음",
+            "기본 09~18시, 설정에서 출근·퇴근 시각 변경(야간근무 등 자정 넘김도 지원)",
+        ]),
         ChangelogEntry(version: "0.3.7", date: "2026.06.16", changes: [
             "컨디션 좋은데 자는 펫이 슬픈 표정으로 보이던 문제 수정",
         ]),

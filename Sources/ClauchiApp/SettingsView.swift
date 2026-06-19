@@ -71,6 +71,29 @@ struct SettingsView: View {
                 model.toggleVacation(on)
             }
 
+            // 근무시간(활동 시간대) — 켜면 근무 밖엔 펫도 같이 취침해 굶어 죽지 않는다
+            SettingSwitchRow(label: "🏢 근무시간만 활동 (그 외엔 같이 취침)",
+                             isOn: settings.workHoursEnabled) { on in
+                var updated = model.settings
+                updated.workHoursEnabled = on
+                model.applySettings(updated)
+            }
+            if settings.workHoursEnabled {
+                HStack(spacing: 10) {
+                    workHourStepper("출근", hour: settings.workStartHour) { hour in
+                        var updated = model.settings
+                        updated.workStartHour = hour
+                        model.applySettings(updated)
+                    }
+                    workHourStepper("퇴근", hour: settings.workEndHour) { hour in
+                        var updated = model.settings
+                        updated.workEndHour = hour
+                        model.applySettings(updated)
+                    }
+                }
+                .padding(.leading, 4)
+            }
+
             SettingSwitchRow(label: "AI 대사 (Apple Intelligence)",
                              isOn: settings.dialogueAIEnabled) { enabled in
                 var updated = model.settings
@@ -189,6 +212,31 @@ struct SettingsView: View {
             }
         }
         }
+    }
+
+    // 근무시간용 시각 스테퍼 — 비활성 패널에서 시스템 Picker가 회색으로 뭉개지므로 직접 그린다.
+    // −/+ 로 0~23시를 순환 선택.
+    private func workHourStepper(_ title: String, hour: Int,
+                                 onChange: @escaping (Int) -> Void) -> some View {
+        HStack(spacing: 5) {
+            Text(title).font(.caption).foregroundStyle(.gray)
+            Button { onChange((hour + 23) % 24) } label: { stepperKey("−") }
+                .buttonStyle(.plain)
+            Text("\(hour)시")
+                .font(.system(size: 11, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+                .frame(width: 32)
+            Button { onChange((hour + 1) % 24) } label: { stepperKey("+") }
+                .buttonStyle(.plain)
+        }
+    }
+
+    private func stepperKey(_ symbol: String) -> some View {
+        Text(symbol)
+            .font(.system(size: 13, weight: .bold))
+            .foregroundStyle(.white)
+            .frame(width: 20, height: 20)
+            .background(RoundedRectangle(cornerRadius: 5).fill(Color(white: 0.22)))
     }
 
     private func updateStatusText(_ phase: UpdateService.Phase) -> String {

@@ -18,3 +18,7 @@ build/
 
 # 내부 설계/계획 문서 — 공개 레포에서 제외
 docs/
+
+# CodeGraph 인덱스 / Cursor 규칙 — 로컬 코드 인텔리전스 산출물
+.codegraph/
+.cursor/
